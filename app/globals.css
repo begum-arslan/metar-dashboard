@@ -67,6 +67,7 @@ body::before {
   font-weight: 800;
   background: linear-gradient(135deg, #f8fafc, #94a3b8);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 8px;
 }
@@ -232,18 +233,30 @@ select:focus, input:focus {
 }
 
 /* ===== Split Layout System ===== */
+.app-main {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  background-color: #050505;
+}
+
 .main-layout {
   display: grid;
   grid-template-columns: 380px 1fr;
-  height: 100vh;
+  height: 100dvh;
   width: 100vw;
   overflow: hidden;
+  position: relative;
+  z-index: 20;
+  pointer-events: none;
 }
 
 .left-panel {
+  pointer-events: auto;
   position: relative;
   z-index: 30;
-  height: 100vh;
+  height: 100dvh;
   overflow-y: auto;
   padding: 28px 24px;
   background: rgba(5, 5, 5, 0.85);
@@ -288,8 +301,9 @@ select:focus, input:focus {
 
 .right-panel {
   position: relative;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
+  pointer-events: none;
 }
 
 .globe-wrapper {
@@ -299,6 +313,7 @@ select:focus, input:focus {
   width: 100%;
   height: 100%;
   z-index: 1;
+  pointer-events: auto;
   transition: filter 1.8s cubic-bezier(0.4, 0, 0.2, 1), transform 1.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -425,4 +440,46 @@ select:focus, input:focus {
   width: 100%;
   padding: 10px;
   font-size: 0.85rem;
+}
+
+/* Mobile Responsive Layout */
+@media (max-width: 900px) {
+  .app-main {
+    overflow-y: auto;
+  }
+  .main-layout {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .left-panel {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 20px 16px;
+  }
+  .right-panel {
+    width: 100%;
+    height: auto;
+    min-height: 50vh;
+    overflow: visible;
+  }
+  .chart-overlay {
+    position: relative;
+    padding: 16px;
+    height: auto;
+    opacity: 0;
+    display: none;
+  }
+  .chart-overlay.visible {
+    opacity: 1;
+    display: block;
+  }
+  .glass-container {
+    padding: 16px;
+  }
 }

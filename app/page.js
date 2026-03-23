@@ -39,8 +39,10 @@ const PERCENTAGE_TABS = [
 
 export default function Home() {
   const globeRef = useRef();
+  const rightPanelRef = useRef(null);
   const rafRef = useRef(null);
   const [mounted, setMounted] = useState(false);
+  const [globeSize, setGlobeSize] = useState({ width: 0, height: 0 });
 
   // Filter state for Months
   const [selectedMonths, setSelectedMonths] = useState([]);
@@ -102,6 +104,21 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Track right-panel size to pass exact responsive dimensions to Globe
+  useEffect(() => {
+    if (!mounted || !rightPanelRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      if (entries.length > 0) {
+        setGlobeSize({
+          width: entries[0].contentRect.width,
+          height: entries[0].contentRect.height
+        });
+      }
+    });
+    observer.observe(rightPanelRef.current);
+    return () => observer.disconnect();
+  }, [mounted]);
 
   // rAF loop that calls controls.update() every frame so autoRotate works
   const startControlsLoop = useCallback(() => {
@@ -191,8 +208,7 @@ export default function Home() {
   };
 
   return (
-    <main style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#050505' }}>
-      
+    <main className="app-main">
       <div className="main-layout">
         
         {/* LEFT PANEL — Controls & Tabs */}
@@ -368,13 +384,15 @@ export default function Home() {
           {/* Footer removed */}
         </div>
 
-        {/* RIGHT PANEL — Globe + Chart Overlay */}
-        <div className="right-panel">
+        {/* RIGHT PANEL — Chart Overlay */}
+        <div className="right-panel" ref={rightPanelRef}>
           {/* Globe */}
           <div className={`globe-wrapper ${showCharts && hasData ? 'blurred' : ''}`}>
-            {mounted && (
+            {mounted && globeSize.width > 0 && (
               <Globe
                 ref={globeRef}
+                width={globeSize.width}
+                height={globeSize.height}
                 globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
                 bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
                 backgroundColor="rgba(0,0,0,0)"
@@ -399,7 +417,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Chart Overlay */}
           <div className={`chart-overlay ${showCharts && hasData ? 'visible' : ''}`}>
             {hasData && mainTab === 'charts' && (
               <Charts data={processedData} />
