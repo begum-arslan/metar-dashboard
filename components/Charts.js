@@ -4,8 +4,11 @@ import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import { format, parseISO } from 'date-fns';
 
 export default function Charts({ data }) {
+  const MAX_CHART_POINTS = 1000;
+  const step = Math.max(1, Math.floor(data.length / MAX_CHART_POINTS));
+
   const chartData = data
-    .filter(d => d && d.valid)
+    .filter((d, i) => d && d.valid && (i % step === 0))
     .map(d => {
       try {
         const dateStr = d.valid.includes('T') ? d.valid : `${d.valid.replace(' ', 'T')}Z`;
@@ -24,6 +27,10 @@ export default function Charts({ data }) {
       }
     });
 
+  const tableData = data
+    .filter(d => d && d.valid)
+    .slice(0, 100);
+
   return (
     <div className="grid grid-cols-1 gap-4">
       {/* Temperature & Dewpoint */}
@@ -31,7 +38,7 @@ export default function Charts({ data }) {
         <h2 style={{ marginBottom: '16px', fontSize: '1.2rem', fontWeight: 600 }}>Temperature & Dewpoint (°C)</h2>
         <div style={{ height: '300px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+            <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 25 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="timeLabel" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
               <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
@@ -49,7 +56,7 @@ export default function Charts({ data }) {
         <h2 style={{ marginBottom: '16px', fontSize: '1.2rem', fontWeight: 600 }}>Wind Speed & Gusts (kt)</h2>
         <div style={{ height: '300px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+            <AreaChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 25 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="timeLabel" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
               <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
@@ -67,7 +74,7 @@ export default function Charts({ data }) {
         <h2 style={{ marginBottom: '16px', fontSize: '1.2rem', fontWeight: 600 }}>Altimeter (inHg)</h2>
         <div style={{ height: '300px' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+            <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 25 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="timeLabel" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
               <YAxis domain={['auto', 'auto']} stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
@@ -82,6 +89,11 @@ export default function Charts({ data }) {
       {/* Raw Data Table */}
       <div className="glass-container" style={{ overflowX: 'auto' }}>
         <h2 style={{ marginBottom: '16px', fontSize: '1.2rem', fontWeight: 600 }}>Raw Data Log</h2>
+        {data.length > 100 && (
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '16px' }}>
+            Showing latest 100 records (out of {data.length} total) to optimize performance.
+          </p>
+        )}
         <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--card-border)' }}>
@@ -90,7 +102,7 @@ export default function Charts({ data }) {
             </tr>
           </thead>
           <tbody>
-            {chartData.map((d, i) => (
+            {tableData.map((d, i) => (
               <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <td style={{ padding: '8px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{d.valid}</td>
                 <td style={{ padding: '8px', fontFamily: 'monospace' }}>{d.raw}</td>

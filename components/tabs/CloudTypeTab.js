@@ -141,7 +141,7 @@ export default function CloudTypeTab({ data }) {
               <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>▼</span>
             </div>
             {isCoverageOpen && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#1a1a1a', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ position: 'absolute', top: '100%', left: 25, right: 0, marginTop: '4px', background: '#1a1a1a', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {COVERAGES.map(cov => (
                   <label key={cov} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
                     <input type="checkbox" checked={selectedCoverages.includes(cov)} onChange={() => toggleCoverage(cov)} style={{ margin: 0 }} />
@@ -170,7 +170,7 @@ export default function CloudTypeTab({ data }) {
               <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>▼</span>
             </div>
             {isTypeOpen && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#1a1a1a', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '8px', zIndex: 11, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ position: 'absolute', top: '100%', left: 25, right: 0, marginTop: '4px', background: '#1a1a1a', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '8px', zIndex: 11, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {TYPES.map(typ => (
                   <label key={typ} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
                     <input type="checkbox" checked={selectedTypes.includes(typ)} onChange={() => toggleType(typ)} style={{ margin: 0 }} />
@@ -206,7 +206,7 @@ export default function CloudTypeTab({ data }) {
           
           <div style={{ height: '350px', width: '100%' }}>
             <ResponsiveContainer>
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 25, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                 <XAxis 
                   dataKey="label" 
@@ -217,7 +217,7 @@ export default function CloudTypeTab({ data }) {
                 <YAxis 
                   stroke="var(--text-muted)" 
                   tick={{ fill: 'var(--text-muted)' }} 
-                  label={{ value: 'Sum(Observations/Days)', angle: -90, position: 'insideLeft', fill: 'var(--text-muted)' }}
+                  label={{ value: 'Sum(Observations/Days)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }}
                 />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--secondary)', border: '1px solid var(--card-border)', borderRadius: '8px' }} 

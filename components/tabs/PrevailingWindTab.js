@@ -217,11 +217,11 @@ export default function PrevailingWindTab({ data }) {
             {subTab !== 'Wind Rose' && (
               <ResponsiveContainer>
                 {subTab === 'ObsMaxAvg' && (
-                  <ComposedChart data={obsMaxAvgData} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
+                  <ComposedChart data={obsMaxAvgData} margin={{ top: 10, right: 30, left: 30, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                     <XAxis dataKey="direction" type="category" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} tickFormatter={(val) => `${val}°`} label={{ value: 'Directions (°)', position: 'insideBottom', offset: -10, fill: 'var(--text-muted)' }} />
-                    <YAxis yAxisId="left" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Wind Speed (KT)', angle: -90, position: 'insideLeft', offset: -10, fill: 'var(--text-muted)' }} />
-                    <YAxis yAxisId="right" orientation="right" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Sum(Observations)', angle: 90, position: 'insideRight', offset: -10, fill: 'var(--text-muted)' }} />
+                    <YAxis yAxisId="left" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Wind Speed (KT)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }} />
+                    <YAxis yAxisId="right" orientation="right" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Sum(Observations)', angle: 90, position: 'insideRight', offset: -10, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }} />
                     <Tooltip contentStyle={{ backgroundColor: 'var(--secondary)', border: '1px solid var(--card-border)', borderRadius: '8px' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} formatter={(val, name) => [name === 'Observations' ? val : val + 'KT', name]} labelFormatter={(label) => `${label}°`} />
                     <Legend verticalAlign="top" height={36} iconType="rect" align="center" wrapperStyle={{ marginBottom: '16px' }} />
                     
@@ -232,10 +232,10 @@ export default function PrevailingWindTab({ data }) {
                 )}
 
                 {subTab === 'Hourly Wind' && (
-                  <AreaChart data={hourlyWindData} stackOffset="expand" margin={{ top: 10, right: 10, left: 0, bottom: 20 }}>
+                  <AreaChart data={hourlyWindData} stackOffset="expand" margin={{ top: 10, right: 10, left: 25, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                     <XAxis dataKey="hour" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)', angle: -45, dx: -15, dy: 10 }} height={50} />
-                    <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} tickFormatter={toPercent} label={{ value: 'Cumulative (%)', angle: -90, position: 'insideLeft', fill: 'var(--text-muted)' }} />
+                    <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} tickFormatter={toPercent} label={{ value: 'Cumulative (%)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }} />
                     <Tooltip contentStyle={{ backgroundColor: 'var(--secondary)', border: '1px solid var(--card-border)', borderRadius: '8px' }} formatter={(val, name) => [val + ' Obs', name]} />
                     <Legend verticalAlign="top" height={60} iconType="circle" wrapperStyle={{ marginBottom: '16px' }} />
                     {DIRECTIONS.map((d, i) => (

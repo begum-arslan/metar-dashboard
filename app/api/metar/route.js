@@ -5,11 +5,11 @@ import parse from 'metar-parser';
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const station = searchParams.get('station');
+    const stationParam = searchParams.get('station');
     const start = searchParams.get('start'); // format YYYY-MM-DD
     const end = searchParams.get('end'); // format YYYY-MM-DD
 
-    if (!station || !start || !end) {
+    if (!stationParam || !start || !end) {
       return NextResponse.json({ error: 'Missing required parameters (station, start, end)' }, { status: 400 });
     }
 
@@ -17,7 +17,16 @@ export async function GET(request) {
     const [year2, month2, day2] = end.split('-');
 
     const iemUrl = new URL('https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py');
-    iemUrl.searchParams.append('station', station);
+    
+    // Support multiple comma-separated stations
+    const stations = stationParam.split(',');
+    stations.forEach(st => {
+      const trimmed = st.trim();
+      if (trimmed) {
+        iemUrl.searchParams.append('station', trimmed.toUpperCase());
+      }
+    });
+
     iemUrl.searchParams.append('data', 'metar');
     iemUrl.searchParams.append('year1', year1);
     iemUrl.searchParams.append('month1', month1);

@@ -1,9 +1,10 @@
 "use client";
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import ControlPanel from '@/components/ControlPanel';
 import Charts from '@/components/Charts';
 import ObservationsView from '@/components/ObservationsView';
+import PercentageView from '@/components/PercentageView';
 import { getAllAirports, findAirport } from '@/data/airports';
 
 const Globe = dynamic(() => import('react-globe.gl'), { ssr: false });
@@ -41,6 +42,27 @@ export default function Home() {
   const rafRef = useRef(null);
   const [mounted, setMounted] = useState(false);
 
+  // Filter state for Months
+  const [selectedMonths, setSelectedMonths] = useState([]);
+  const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
+
+  const MONTHS_OPTIONS = [
+    { value: 0, label: 'January' },
+    { value: 1, label: 'February' },
+    { value: 2, label: 'March' },
+    { value: 3, label: 'April' },
+    { value: 4, label: 'May' },
+    { value: 5, label: 'June' },
+    { value: 6, label: 'July' },
+    { value: 7, label: 'August' },
+    { value: 8, label: 'September' },
+    { value: 9, label: 'October' },
+    { value: 10, label: 'November' },
+    { value: 11, label: 'December' }
+  ];
+
+
+
   // Data state
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -54,6 +76,28 @@ export default function Home() {
   const [percentageTab, setPercentageTab] = useState('visibility_pct');
 
   const hasData = data && data.length > 0;
+
+  const processedData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    if (selectedMonths.length === 0) return data;
+    
+    return data.filter(d => {
+      try {
+        const dateStr = d.valid.includes('T') ? d.valid : `${d.valid.replace(' ', 'T')}Z`;
+        const dt = new Date(dateStr);
+        if (isNaN(dt.getTime())) return false;
+        return selectedMonths.includes(dt.getUTCMonth());
+      } catch (e) {
+        return false;
+      }
+    });
+  }, [data, selectedMonths]);
+
+  const toggleMonth = (val) => {
+    setSelectedMonths(prev => 
+      prev.includes(val) ? prev.filter(m => m !== val) : [...prev, val]
+    );
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -135,6 +179,7 @@ export default function Home() {
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setData(json.data);
+      setSelectedMonths([]); // Reset months filter on new data load
       setActiveStation(stationInput.toUpperCase());
       // Zoom to the airport
       zoomToAirport(stationInput);
@@ -169,6 +214,75 @@ export default function Home() {
             <ControlPanel onFetch={fetchData} loading={loading} />
           </div>
 
+          {/* Months Filter */}
+          {hasData && (
+            <div style={{ marginTop: '16px', position: 'relative' }}>
+              <div className="section-label">Filter by Months</div>
+              <div 
+                onClick={() => setIsMonthDropdownOpen(!isMonthDropdownOpen)}
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--card-border)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: '#ffffff',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  {selectedMonths.length === 0 ? (
+                    <span style={{ color: 'rgba(255,255,255,0.4)' }}>All Months (No Filter)</span>
+                  ) : (
+                    selectedMonths.map(m => (
+                      <span key={m} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                        {MONTHS_OPTIONS.find(mo => mo.value === m)?.label.substring(0,3)} ✕
+                      </span>
+                    ))
+                  )}
+                </div>
+                <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>▼</span>
+              </div>
+              
+              {isMonthDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  background: '#1a1a1a',
+                  border: '1px solid var(--card-border)',
+                  borderRadius: '8px',
+                  padding: '8px',
+                  zIndex: 50,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                  maxHeight: '200px',
+                  overflowY: 'auto'
+                }}>
+                  {MONTHS_OPTIONS.map(opt => (
+                    <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0, fontSize: '0.9rem', color: '#fff' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedMonths.includes(opt.value)}
+                        onChange={() => toggleMonth(opt.value)}
+                        style={{ margin: 0 }}
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+
           {/* Error */}
           {error && (
             <div style={{ color: '#ef4444', padding: '12px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', fontSize: '0.85rem' }}>
@@ -180,7 +294,7 @@ export default function Home() {
           <div className={`data-status ${hasData ? 'has-data' : ''}`}>
             <span className="dot" />
             {hasData
-              ? `${data.length} observations — ${activeStation}`
+              ? `${processedData.length} observations (of ${data.length}) — ${activeStation}`
               : 'No data loaded'}
           </div>
 
@@ -288,18 +402,13 @@ export default function Home() {
           {/* Chart Overlay */}
           <div className={`chart-overlay ${showCharts && hasData ? 'visible' : ''}`}>
             {hasData && mainTab === 'charts' && (
-              <Charts data={data} />
+              <Charts data={processedData} />
             )}
             {hasData && mainTab === 'observations' && (
-              <ObservationsView data={data} activeTab={observationTab} />
+              <ObservationsView data={processedData} activeTab={observationTab} />
             )}
             {hasData && mainTab === 'percentage' && (
-              <div className="glass-container" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                <h3 style={{ color: '#ffffff', marginBottom: '8px' }}>
-                  {PERCENTAGE_TABS.find(t => t.id === percentageTab)?.label} Seçenekleri
-                </h3>
-                <p>Percentage hesaplamaları ve grafikleri buraya eklenecektir...</p>
-              </div>
+              <PercentageView data={processedData} activeTab={percentageTab} />
             )}
           </div>
         </div>
