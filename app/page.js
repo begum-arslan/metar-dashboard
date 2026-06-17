@@ -44,7 +44,12 @@ const getHtmlElement = (d) => {
   el.style.position = 'relative';
   el.style.pointerEvents = 'none';
 
+  const isDay = d.isDayTime;
+
   if (d.type === 'hub') {
+    const hubColor = isDay ? '#8c6239' : '#3b82f6';
+    const hubBg = isDay ? 'rgba(140, 98, 57, 0.2)' : 'rgba(59, 130, 246, 0.2)';
+    
     el.innerHTML = `
       <!-- Pulsing ring centered at coordinate -->
       <div style="
@@ -54,8 +59,8 @@ const getHtmlElement = (d) => {
         transform: translate(-50%, -50%);
         width: 20px;
         height: 20px;
-        background: rgba(59, 130, 246, 0.2);
-        border: 2px solid #3b82f6;
+        background: ${hubBg};
+        border: 2px solid ${hubColor};
         border-radius: 50%;
         animation: pulse-ring 1.8s infinite ease-in-out;
         pointer-events: none;
@@ -73,13 +78,16 @@ const getHtmlElement = (d) => {
         align-items: center;
         pointer-events: none;
       ">
-        <svg viewBox="0 0 24 24" width="22px" height="22px" style="filter: drop-shadow(0 0 4px #3b82f6);">
-          <path fill="#3b82f6" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+        <svg viewBox="0 0 24 24" width="22px" height="22px" style="filter: drop-shadow(0 0 4px ${hubColor});">
+          <path fill="${hubColor}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
           <path fill="#ffffff" transform="matrix(0.42 0 0 0.42 7 4)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
         </svg>
       </div>
     `;
   } else {
+    const destColor = isDay ? '#d5c295' : '#93c5fd';
+    const destBg = isDay ? 'rgba(213, 194, 149, 0.2)' : 'rgba(147, 197, 253, 0.2)';
+    
     el.innerHTML = `
       <!-- Pulsing ring centered at coordinate -->
       <div style="
@@ -89,8 +97,8 @@ const getHtmlElement = (d) => {
         transform: translate(-50%, -50%);
         width: 24px;
         height: 24px;
-        background: rgba(147, 197, 253, 0.2);
-        border: 2px solid #93c5fd;
+        background: ${destBg};
+        border: 2px solid ${destColor};
         border-radius: 50%;
         animation: pulse-ring 1.5s infinite ease-in-out;
         pointer-events: none;
@@ -108,8 +116,8 @@ const getHtmlElement = (d) => {
         align-items: center;
         pointer-events: none;
       ">
-        <svg viewBox="0 0 24 24" width="24px" height="24px" style="filter: drop-shadow(0 0 6px #93c5fd);">
-          <path fill="#93c5fd" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+        <svg viewBox="0 0 24 24" width="24px" height="24px" style="filter: drop-shadow(0 0 6px ${destColor});">
+          <path fill="${destColor}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
           <path fill="#ffffff" transform="matrix(0.42 0 0 0.42 7 4)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
         </svg>
       </div>
@@ -174,6 +182,7 @@ export default function Home() {
   const [resetKey, setResetKey] = useState(0);
   const [hoveredPoint, setHoveredPoint] = useState(null);
   const [stationInput, setStationInput] = useState('LTFM');
+  const [isDayTime, setIsDayTime] = useState(false);
 
   const activeAirportObj = useMemo(() => {
     if (!activeStation) return null;
@@ -199,7 +208,8 @@ export default function Home() {
       lat: 41.2608,
       lng: 28.7418,
       type: 'hub',
-      name: 'Istanbul Airport (IST)'
+      name: 'Istanbul Airport (IST)',
+      isDayTime
     });
 
     // 2. Active Destination
@@ -208,13 +218,18 @@ export default function Home() {
         lat: activeAirportObj.lat,
         lng: activeAirportObj.lng,
         type: 'destination',
-        name: `${activeAirportObj.name} (${activeAirportObj.iata})`
+        name: `${activeAirportObj.name} (${activeAirportObj.iata})`,
+        isDayTime
       });
     }
     return elements;
-  }, [activeAirportObj]);
+  }, [activeAirportObj, isDayTime]);
 
   const hasData = data && data.length > 0;
+
+  const activeColor = isDayTime ? '#d5c295' : '#93c5fd';
+  const activeRingRgb = isDayTime ? '213, 194, 149' : '147, 197, 253';
+  const generalAirportColor = isDayTime ? 'rgba(213, 194, 149, 0.4)' : 'rgba(59, 130, 246, 0.4)';
 
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -240,6 +255,8 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
+    const hour = new Date().getHours();
+    setIsDayTime(hour >= 8 && hour < 18);
   }, []);
 
   // Track right-panel size to pass exact responsive dimensions to Globe
@@ -514,7 +531,7 @@ export default function Home() {
           )}
 
           {/* Data Status */}
-          <div className={`data-status ${hasData ? 'has-data' : ''}`}>
+          <div className={['data-status', hasData ? 'has-data' : ''].filter(Boolean).join(' ')}>
             <span className="dot" />
             {hasData
               ? `${processedData.length} observations (of ${data.length}) — ${activeStation}`
@@ -594,13 +611,13 @@ export default function Home() {
         {/* RIGHT PANEL — Chart Overlay */}
         <div className="right-panel" ref={rightPanelRef}>
           {/* Globe */}
-          <div className={`globe-wrapper ${showCharts && hasData ? 'blurred' : ''}`}>
+          <div className={['globe-wrapper', showCharts && hasData ? 'blurred' : '', isDayTime ? 'daytime' : ''].filter(Boolean).join(' ')}>
             {mounted && globeSize.width > 0 && (
               <Globe
                 ref={globeRef}
                 width={globeSize.width}
                 height={globeSize.height}
-                globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
+                globeImageUrl={isDayTime ? "//unpkg.com/three-globe/example/img/earth-blue-marble.jpg" : "//unpkg.com/three-globe/example/img/earth-night.jpg"}
                 bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
                 backgroundColor="rgba(0,0,0,0)"
                 autoRotate={true}
@@ -611,8 +628,8 @@ export default function Home() {
                 pointLng="lng"
                 pointColor={d => {
                   if (d === hoveredPoint) return '#ffffff';
-                  if (activeStation && (d.iata === activeStation || d.icao === activeStation)) return '#93c5fd';
-                  return 'rgba(59, 130, 246, 0.4)'; // Subtle blue for general airports
+                  if (activeStation && (d.iata === activeStation || d.icao === activeStation)) return activeColor;
+                  return generalAirportColor;
                 }}
                 pointAltitude={d => d === hoveredPoint ? 0.03 : (activeStation && (d.iata === activeStation || d.icao === activeStation) ? 0.02 : 0.008)}
                 pointRadius={d => d === hoveredPoint ? 0.6 : (activeStation && (d.iata === activeStation || d.icao === activeStation) ? 0.5 : 0.18)}
@@ -644,12 +661,12 @@ export default function Home() {
                 labelText="iata"
                 labelSize={1.5}
                 labelDotRadius={0.4}
-                labelColor={() => '#93c5fd'}
+                labelColor={() => activeColor}
                 labelResolution={2}
                 labelAltitude={0.02}
 
                 ringsData={activeStation ? AIRPORTS.filter(a => a.iata === activeStation || a.icao === activeStation) : []}
-                ringColor={() => t => `rgba(147, 197, 253, ${1 - t})`}
+                ringColor={() => t => `rgba(${activeRingRgb}, ${1 - t})`}
                 ringMaxRadius={2.5}
                 ringPropagationSpeed={3}
                 ringRepeatPeriod={800}
@@ -667,7 +684,7 @@ export default function Home() {
                 arcStartLng="startLng"
                 arcEndLat="endLat"
                 arcEndLng="endLng"
-                arcColor={() => '#93c5fd'}
+                arcColor={() => activeColor}
                 arcAltitude={0.25}
                 arcStroke={1.2}
                 arcDashLength={0.15}
@@ -681,7 +698,7 @@ export default function Home() {
             )}
           </div>
 
-          <div className={`chart-overlay ${showCharts && hasData ? 'visible' : ''}`}>
+          <div className={['chart-overlay', showCharts && hasData ? 'visible' : ''].filter(Boolean).join(' ')}>
             {hasData && mainTab === 'charts' && (
               <Charts data={processedData} />
             )}

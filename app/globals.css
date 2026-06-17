@@ -333,6 +333,11 @@ select:focus, input:focus {
   transform: scale(1.08);
 }
 
+.globe-wrapper.daytime canvas {
+  filter: saturate(0.65) brightness(0.6) contrast(1.05);
+  transition: filter 0.5s ease;
+}
+
 .chart-overlay {
   position: absolute;
   top: 0;
