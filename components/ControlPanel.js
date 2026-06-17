@@ -2,8 +2,7 @@
 import { useState } from 'react';
 import { findAirport } from '@/data/airports';
 
-export default function ControlPanel({ onFetch, loading }) {
-  const [station, setStation] = useState('LTFM');
+export default function ControlPanel({ onFetch, loading, station, setStation }) {
   
   const today = new Date();
   const past = new Date();

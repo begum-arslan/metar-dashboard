@@ -288,6 +288,12 @@ select:focus, input:focus {
   letter-spacing: 3px;
   color: rgba(255, 255, 255, 0.6);
   margin-bottom: 4px;
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+
+.top-title:hover {
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .top-title-accent {
@@ -297,6 +303,11 @@ select:focus, input:focus {
   letter-spacing: 2px;
   color: rgba(255, 255, 255, 0.3);
   margin-top: 4px;
+  transition: color 0.25s ease;
+}
+
+.top-title:hover .top-title-accent {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .right-panel {
