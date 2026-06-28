@@ -9,6 +9,124 @@ import { getAllAirports, findAirport } from '@/data/airports';
 
 const Globe = dynamic(() => import('react-globe.gl'), { ssr: false });
 
+// ─── Solar position helpers (avoid importing solar-calculator at module level for SSR) ───
+function getSunPosition(date) {
+  // Calculate the sub-solar point (lat, lng) for a given Date
+  const dayOfYear = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+  const utcHours = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+
+  // Solar declination (approximate, Spencer formula simplified)
+  const B = (2 * Math.PI / 365) * (dayOfYear - 1);
+  const decl = 0.006918
+    - 0.399912 * Math.cos(B)
+    + 0.070257 * Math.sin(B)
+    - 0.006758 * Math.cos(2 * B)
+    + 0.000907 * Math.sin(2 * B)
+    - 0.002697 * Math.cos(3 * B)
+    + 0.00148 * Math.sin(3 * B);
+
+  // Equation of time (minutes)
+  const eot = 229.18 * (
+    0.000075
+    + 0.001868 * Math.cos(B)
+    - 0.032077 * Math.sin(B)
+    - 0.014615 * Math.cos(2 * B)
+    - 0.04089 * Math.sin(2 * B)
+  );
+
+  // Sub-solar longitude: based on UTC time and equation of time
+  const solarNoonOffsetMinutes = eot;
+  const lng = -(utcHours - 12) * 15 + solarNoonOffsetMinutes * (15 / 60);
+
+  // Sub-solar latitude: declination in degrees
+  const lat = decl * (180 / Math.PI);
+
+  return { lat, lng: ((lng + 540) % 360) - 180 }; // normalize lng to [-180, 180]
+}
+
+// Day/Night custom shader
+const DAY_NIGHT_VERTEX_SHADER = `
+  varying vec3 vWorldPosition;
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    // Pass object-space position (the sphere is centered at origin)
+    vWorldPosition = normalize(position);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const DAY_NIGHT_FRAGMENT_SHADER = `
+  #define PI 3.141592653589793
+  uniform sampler2D dayTexture;
+  uniform sampler2D nightTexture;
+  uniform vec2 sunPosition; // [lng, lat] in degrees
+  varying vec3 vWorldPosition;
+  varying vec2 vUv;
+
+  // Color grading helpers
+  vec3 adjustSaturation(vec3 color, float saturation) {
+    float grey = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    return mix(vec3(grey), color, saturation);
+  }
+
+  vec3 adjustContrast(vec3 color, float contrast) {
+    return (color - 0.5) * contrast + 0.5;
+  }
+
+  void main() {
+    // Convert sun position (lng, lat) to cartesian direction
+    float sunLng = sunPosition.x * PI / 180.0;
+    float sunLat = sunPosition.y * PI / 180.0;
+    vec3 sunDir = vec3(
+      cos(sunLat) * cos(sunLng),
+      sin(sunLat),
+      cos(sunLat) * sin(sunLng)
+    );
+
+    // Reconstruct surface direction from UV coordinates
+    float fragLng = (vUv.x - 0.5) * 2.0 * PI;
+    float fragLat = (vUv.y - 0.5) * PI;
+    vec3 surfaceDir = vec3(
+      cos(fragLat) * cos(fragLng),
+      sin(fragLat),
+      cos(fragLat) * sin(fragLng)
+    );
+
+    // Dot product: 1.0 = full sun, -1.0 = full night
+    float intensity = dot(normalize(surfaceDir), normalize(sunDir));
+
+    // Clean transition at terminator (no extra glow)
+    float blend = smoothstep(-0.08, 0.12, intensity);
+
+    // === Day texture — brighter, slightly desaturated premium look ===
+    vec4 dayRaw = texture2D(dayTexture, vUv);
+    vec3 dayGraded = dayRaw.rgb;
+    dayGraded = adjustSaturation(dayGraded, 0.75);
+    dayGraded *= 0.85;
+    dayGraded = adjustContrast(dayGraded, 1.08);
+
+    // === Night texture ===
+    vec4 nightRaw = texture2D(nightTexture, vUv);
+    vec3 nightGraded = nightRaw.rgb;
+    // Boost city lights
+    nightGraded *= 2.8;
+    
+    // Moonlight ambient: Use the daytime map to reveal continents/oceans at night
+    // Tint the daytime colors with a deep cool blue for a realistic night look
+    vec3 moonlightTint = vec3(0.12, 0.22, 0.45);
+    vec3 nightAmbient = dayRaw.rgb * moonlightTint * 0.9;
+    
+    // Combine city lights with the ambient geography
+    nightGraded = max(nightGraded, nightAmbient);
+
+    // Final blend — clean transition
+    vec3 finalColor = mix(nightGraded, dayGraded, blend);
+
+    gl_FragColor = vec4(finalColor, 1.0);
+  }
+`;
+
 const AIRPORTS = getAllAirports();
 
 const OBSERVATION_TABS = [
@@ -49,7 +167,7 @@ const getHtmlElement = (d) => {
   if (d.type === 'hub') {
     const hubColor = isDay ? '#8c6239' : '#3b82f6';
     const hubBg = isDay ? 'rgba(140, 98, 57, 0.2)' : 'rgba(59, 130, 246, 0.2)';
-    
+
     el.innerHTML = `
       <!-- Pulsing ring centered at coordinate -->
       <div style="
@@ -87,7 +205,7 @@ const getHtmlElement = (d) => {
   } else {
     const destColor = isDay ? '#d5c295' : '#93c5fd';
     const destBg = isDay ? 'rgba(213, 194, 149, 0.2)' : 'rgba(147, 197, 253, 0.2)';
-    
+
     el.innerHTML = `
       <!-- Pulsing ring centered at coordinate -->
       <div style="
@@ -144,6 +262,7 @@ export default function Home() {
   const rightPanelRef = useRef(null);
   const rafRef = useRef(null);
   const rotationTimeoutRef = useRef(null);
+  const globeMaterialRef = useRef(null);
   const [mounted, setMounted] = useState(false);
   const [globeSize, setGlobeSize] = useState({ width: 0, height: 0 });
 
@@ -183,6 +302,7 @@ export default function Home() {
   const [hoveredPoint, setHoveredPoint] = useState(null);
   const [stationInput, setStationInput] = useState('LTFM');
   const [isDayTime, setIsDayTime] = useState(false);
+  const [sunPos, setSunPos] = useState(() => getSunPosition(new Date()));
 
   const activeAirportObj = useMemo(() => {
     if (!activeStation) return null;
@@ -257,7 +377,48 @@ export default function Home() {
     setMounted(true);
     const hour = new Date().getHours();
     setIsDayTime(hour >= 8 && hour < 18);
+
+    // Update sun position every 60 seconds
+    const updateSun = () => setSunPos(getSunPosition(new Date()));
+    updateSun();
+    const sunInterval = setInterval(updateSun, 60000);
+    return () => clearInterval(sunInterval);
   }, []);
+
+  // Create and manage the globe material with day/night shader
+  const globeMaterial = useMemo(() => {
+    if (typeof window === 'undefined') return undefined;
+    // Dynamically import Three.js on client side
+    const THREE = require('three');
+
+    const dayTex = new THREE.TextureLoader().load('/textures/earth-day-8k.jpg');
+    const nightTex = new THREE.TextureLoader().load('/textures/earth-night-8k.jpg');
+
+    // Ensure textures wrap correctly
+    [dayTex, nightTex].forEach(tex => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+    });
+
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        dayTexture: { value: dayTex },
+        nightTexture: { value: nightTex },
+        sunPosition: { value: new THREE.Vector2(sunPos.lng, sunPos.lat) },
+      },
+      vertexShader: DAY_NIGHT_VERTEX_SHADER,
+      fragmentShader: DAY_NIGHT_FRAGMENT_SHADER,
+    });
+
+    globeMaterialRef.current = material;
+    return material;
+  }, []); // only create once
+
+  // Update shader sunPosition uniform whenever sunPos changes
+  useEffect(() => {
+    if (globeMaterialRef.current) {
+      globeMaterialRef.current.uniforms.sunPosition.value.set(sunPos.lng, sunPos.lat);
+    }
+  }, [sunPos]);
 
   // Track right-panel size to pass exact responsive dimensions to Globe
   useEffect(() => {
@@ -435,7 +596,6 @@ export default function Home() {
           <div>
             <h1 className="top-title" onClick={handleLogoClick}>
               Operational Dashboard
-              <span className="top-title-accent">METAR / SPECI Tracking</span>
             </h1>
           </div>
 
@@ -611,15 +771,18 @@ export default function Home() {
         {/* RIGHT PANEL — Chart Overlay */}
         <div className="right-panel" ref={rightPanelRef}>
           {/* Globe */}
-          <div className={['globe-wrapper', showCharts && hasData ? 'blurred' : '', isDayTime ? 'daytime' : ''].filter(Boolean).join(' ')}>
+          <div className={['globe-wrapper', showCharts && hasData ? 'blurred' : ''].filter(Boolean).join(' ')}>
             {mounted && globeSize.width > 0 && (
               <Globe
                 ref={globeRef}
                 width={globeSize.width}
                 height={globeSize.height}
-                globeImageUrl={isDayTime ? "//unpkg.com/three-globe/example/img/earth-blue-marble.jpg" : "//unpkg.com/three-globe/example/img/earth-night.jpg"}
+                globeImageUrl="/textures/earth-day-8k.jpg"
                 bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+                globeMaterial={globeMaterial}
                 backgroundColor="rgba(0,0,0,0)"
+                atmosphereColor="#4b7b9c"
+                atmosphereAltitude={0.25}
                 autoRotate={true}
                 autoRotateSpeed={0.12}
 

@@ -33,9 +33,11 @@ export default function ControlPanel({ onFetch, loading, station, setStation }) 
           maxLength={4}
           required 
         />
-        {isIATA && (
+        {station.length >= 3 && (
           <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
-            → {resolved.airport.icao} · {resolved.airport.name}
+            {resolved && resolved.airport 
+              ? `→ ${resolved.airport.icao} ${resolved.airport.iata ? `/ ${resolved.airport.iata}` : ''} · ${resolved.airport.name}`
+              : `→ ${station.toUpperCase()}`}
           </span>
         )}
       </div>
@@ -53,7 +55,7 @@ export default function ControlPanel({ onFetch, loading, station, setStation }) 
       </div>
 
       <button type="submit" className="btn-primary" disabled={loading}>
-        {loading ? <div className="loader"></div> : 'Fetch & Analyze'}
+        {loading ? <div className="loader"></div> : 'Analyze'}
       </button>
     </form>
   );
