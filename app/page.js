@@ -157,87 +157,162 @@ const PERCENTAGE_TABS = [
 
 const getHtmlElement = (d) => {
   const el = document.createElement('div');
-  el.style.width = '32px';
-  el.style.height = '32px';
+  el.style.width = '48px';
+  el.style.height = '48px';
   el.style.position = 'relative';
   el.style.pointerEvents = 'none';
 
   const isDay = d.isDayTime;
 
   if (d.type === 'hub') {
-    const hubColor = isDay ? '#8c6239' : '#3b82f6';
-    const hubBg = isDay ? 'rgba(140, 98, 57, 0.2)' : 'rgba(59, 130, 246, 0.2)';
+    // Hub (Istanbul) — premium gradient marker with concentric pulse rings
+    const hubPrimary = isDay ? '#c9913c' : '#60a5fa';
+    const hubSecondary = isDay ? '#a67525' : '#3b82f6';
+    const hubGlow = isDay ? 'rgba(201, 145, 60, 0.6)' : 'rgba(96, 165, 250, 0.6)';
+    const hubGlowOuter = isDay ? 'rgba(201, 145, 60, 0.15)' : 'rgba(96, 165, 250, 0.15)';
+    const hubGradient = isDay
+      ? 'linear-gradient(135deg, #e8b04a, #a67525)'
+      : 'linear-gradient(135deg, #93c5fd, #3b82f6)';
+    const hubRingColor = isDay ? 'rgba(201, 145, 60,' : 'rgba(96, 165, 250,';
 
     el.innerHTML = `
-      <!-- Pulsing ring centered at coordinate -->
+      <!-- Outer pulse ring 1 -->
       <div style="
-        position: absolute;
-        left: 50%;
-        top: 50%;
+        position: absolute; left: 50%; top: 50%;
         transform: translate(-50%, -50%);
-        width: 20px;
-        height: 20px;
-        background: ${hubBg};
-        border: 2px solid ${hubColor};
+        width: 40px; height: 40px;
+        border: 1.5px solid ${hubPrimary};
         border-radius: 50%;
-        animation: pulse-ring 1.8s infinite ease-in-out;
+        animation: pin-pulse-1 2.4s infinite ease-out;
         pointer-events: none;
       "></div>
-      <!-- Teardrop Pin with bottom tip pointing to coordinate -->
+      <!-- Outer pulse ring 2 (delayed) -->
       <div style="
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -100%);
-        width: 22px;
-        height: 22px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px; height: 40px;
+        border: 1px solid ${hubPrimary};
+        border-radius: 50%;
+        animation: pin-pulse-1 2.4s 0.8s infinite ease-out;
+        pointer-events: none;
+      "></div>
+      <!-- Static glow halo -->
+      <div style="
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        background: radial-gradient(circle, ${hubGlow} 0%, ${hubGlowOuter} 50%, transparent 70%);
+        animation: pin-breathe 3s infinite ease-in-out;
+        pointer-events: none;
+      "></div>
+      <!-- Central marker -->
+      <div style="
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        width: 18px; height: 18px;
+        background: ${hubGradient};
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.35);
+        box-shadow: 0 0 12px ${hubGlow}, inset 0 1px 2px rgba(255,255,255,0.3);
+        display: flex; align-items: center; justify-content: center;
         pointer-events: none;
       ">
-        <svg viewBox="0 0 24 24" width="22px" height="22px" style="filter: drop-shadow(0 0 4px ${hubColor});">
-          <path fill="${hubColor}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-          <path fill="#ffffff" transform="matrix(0.42 0 0 0.42 7 4)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
+        <svg viewBox="0 0 24 24" width="10px" height="10px" style="filter: drop-shadow(0 0 1px rgba(255,255,255,0.8));">
+          <path fill="#ffffff" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
         </svg>
+      </div>
+      <!-- Label -->
+      <div style="
+        position: absolute; left: 50%; top: -8px;
+        transform: translate(-50%, -100%);
+        background: rgba(10, 10, 10, 0.85);
+        backdrop-filter: blur(8px);
+        border: 1px solid ${hubRingColor} 0.3);
+        border-radius: 6px;
+        padding: 3px 8px;
+        white-space: nowrap;
+        pointer-events: none;
+        animation: pin-float-label 3s infinite ease-in-out;
+      ">
+        <span style="
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 9px; font-weight: 700;
+          letter-spacing: 1.5px;
+          color: ${hubPrimary};
+          text-shadow: 0 0 8px ${hubGlow};
+        ">IST</span>
       </div>
     `;
   } else {
-    const destColor = isDay ? '#d5c295' : '#93c5fd';
-    const destBg = isDay ? 'rgba(213, 194, 149, 0.2)' : 'rgba(147, 197, 253, 0.2)';
+    // Destination — sleek glowing dot with label
+    const destPrimary = isDay ? '#d5c295' : '#93c5fd';
+    const destGlow = isDay ? 'rgba(213, 194, 149, 0.5)' : 'rgba(147, 197, 253, 0.5)';
+    const destGlowOuter = isDay ? 'rgba(213, 194, 149, 0.1)' : 'rgba(147, 197, 253, 0.1)';
+    const destGradient = isDay
+      ? 'linear-gradient(135deg, #e8d5a8, #c9a96e)'
+      : 'linear-gradient(135deg, #bfdbfe, #60a5fa)';
+    const destRingColor = isDay ? 'rgba(213, 194, 149,' : 'rgba(147, 197, 253,';
+    const destName = d.name || '';
+    const destCode = destName.match(/\(([A-Z]{3})\)/)?.[1] || '';
 
     el.innerHTML = `
-      <!-- Pulsing ring centered at coordinate -->
+      <!-- Outer pulse ring -->
       <div style="
-        position: absolute;
-        left: 50%;
-        top: 50%;
+        position: absolute; left: 50%; top: 50%;
         transform: translate(-50%, -50%);
-        width: 24px;
-        height: 24px;
-        background: ${destBg};
-        border: 2px solid ${destColor};
+        width: 32px; height: 32px;
+        border: 1px solid ${destPrimary};
         border-radius: 50%;
-        animation: pulse-ring 1.5s infinite ease-in-out;
+        animation: pin-pulse-1 2s infinite ease-out;
         pointer-events: none;
       "></div>
-      <!-- Teardrop Pin with bottom tip pointing to coordinate -->
+      <!-- Glow halo -->
       <div style="
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -100%);
-        width: 24px;
-        height: 24px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        width: 18px; height: 18px;
+        border-radius: 50%;
+        background: radial-gradient(circle, ${destGlow} 0%, ${destGlowOuter} 50%, transparent 70%);
+        animation: pin-breathe 2.5s infinite ease-in-out;
+        pointer-events: none;
+      "></div>
+      <!-- Central marker -->
+      <div style="
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        width: 14px; height: 14px;
+        background: ${destGradient};
+        border-radius: 50%;
+        border: 1.5px solid rgba(255,255,255,0.3);
+        box-shadow: 0 0 10px ${destGlow}, inset 0 1px 2px rgba(255,255,255,0.25);
+        display: flex; align-items: center; justify-content: center;
         pointer-events: none;
       ">
-        <svg viewBox="0 0 24 24" width="24px" height="24px" style="filter: drop-shadow(0 0 6px ${destColor});">
-          <path fill="${destColor}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-          <path fill="#ffffff" transform="matrix(0.42 0 0 0.42 7 4)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
+        <svg viewBox="0 0 24 24" width="8px" height="8px" style="filter: drop-shadow(0 0 1px rgba(255,255,255,0.6));">
+          <path fill="#ffffff" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
         </svg>
+      </div>
+      <!-- Label -->
+      <div style="
+        position: absolute; left: 50%; top: -6px;
+        transform: translate(-50%, -100%);
+        background: rgba(10, 10, 10, 0.8);
+        backdrop-filter: blur(8px);
+        border: 1px solid ${destRingColor} 0.25);
+        border-radius: 5px;
+        padding: 2px 7px;
+        white-space: nowrap;
+        pointer-events: none;
+        animation: pin-float-label 2.8s 0.3s infinite ease-in-out;
+      ">
+        <span style="
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 8px; font-weight: 600;
+          letter-spacing: 1.2px;
+          color: ${destPrimary};
+          text-shadow: 0 0 6px ${destGlow};
+        ">${destCode}</span>
       </div>
     `;
   }
@@ -246,9 +321,35 @@ const getHtmlElement = (d) => {
     const style = document.createElement('style');
     style.id = 'globe-pin-styles';
     style.textContent = `
-      @keyframes pulse-ring {
-        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
-        100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+      @keyframes pin-pulse-1 {
+        0% {
+          transform: translate(-50%, -50%) scale(0.5);
+          opacity: 0.8;
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(2.8);
+          opacity: 0;
+        }
+      }
+      @keyframes pin-breathe {
+        0%, 100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0.7;
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.3);
+          opacity: 1;
+        }
+      }
+      @keyframes pin-float-label {
+        0%, 100% {
+          transform: translate(-50%, -100%) translateY(0px);
+          opacity: 0.9;
+        }
+        50% {
+          transform: translate(-50%, -100%) translateY(-2px);
+          opacity: 1;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -293,6 +394,7 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [showCharts, setShowCharts] = useState(false);
   const [activeStation, setActiveStation] = useState(null);
+  const [resolvedCoords, setResolvedCoords] = useState(null); // { lat, lng, code } for airports not in local DB
 
   // Tab state
   const [mainTab, setMainTab] = useState('observations');
@@ -307,11 +409,32 @@ export default function Home() {
   const activeAirportObj = useMemo(() => {
     if (!activeStation) return null;
     const { airport } = findAirport(activeStation);
-    return airport;
-  }, [activeStation]);
+    
+    if (airport) {
+      if (airport.lat != null && airport.lng != null) return airport;
+      // If airport is found but missing coords, merge resolvedCoords
+      if (resolvedCoords) {
+        return { ...airport, lat: resolvedCoords.lat, lng: resolvedCoords.lng };
+      }
+      // If we still have no coords, we can't show it on the globe
+      return null;
+    }
+    
+    // Fallback to API-resolved coordinates for entirely unknown airports
+    if (resolvedCoords) {
+      return {
+        lat: resolvedCoords.lat,
+        lng: resolvedCoords.lng,
+        iata: resolvedCoords.code,
+        icao: resolvedCoords.code,
+        name: `${resolvedCoords.code}`
+      };
+    }
+    return null;
+  }, [activeStation, resolvedCoords]);
 
   const activeRoute = useMemo(() => {
-    if (!activeAirportObj) return [];
+    if (!activeAirportObj || activeAirportObj.lat == null) return [];
     if (activeAirportObj.iata === 'IST' || activeAirportObj.icao === 'LTFM') return [];
     return [{
       startLat: 41.2608,
@@ -333,7 +456,7 @@ export default function Home() {
     });
 
     // 2. Active Destination
-    if (activeAirportObj && activeAirportObj.iata !== 'IST' && activeAirportObj.icao !== 'LTFM') {
+    if (activeAirportObj && activeAirportObj.lat != null && activeAirportObj.iata !== 'IST' && activeAirportObj.icao !== 'LTFM') {
       elements.push({
         lat: activeAirportObj.lat,
         lng: activeAirportObj.lng,
@@ -459,7 +582,7 @@ export default function Home() {
             controls.autoRotate = true;
             controls.autoRotateSpeed = 0.12;
             controls.enableZoom = true;
-            globeRef.current.pointOfView({ lat: 30, lng: 20, altitude: 2.5 }, 0);
+            globeRef.current.pointOfView({ lat: 30, lng: 20, altitude: 2.5 }, 4000);
             startControlsLoop();
             clearInterval(interval);
           }
@@ -475,16 +598,20 @@ export default function Home() {
   }, [mounted, startControlsLoop]);
 
   // Zoom to airport and then show charts
-  const zoomToAirport = useCallback((code) => {
+  // Accepts optional fallback coordinates { lat, lng } for airports not in local DB
+  const zoomToAirport = useCallback((code, fallbackCoords) => {
     const { airport } = findAirport(code);
-    if (airport && globeRef.current) {
+    const targetLat = airport?.lat ?? fallbackCoords?.lat;
+    const targetLng = airport?.lng ?? fallbackCoords?.lng;
+
+    if (targetLat != null && targetLng != null && globeRef.current) {
       // Stop auto-rotation during zoom
       try {
         globeRef.current.controls().autoRotate = false;
       } catch (e) { }
       // Zoom to the airport location
       globeRef.current.pointOfView(
-        { lat: airport.lat, lng: airport.lng, altitude: 1.2 },
+        { lat: targetLat, lng: targetLng, altitude: 1.2 },
         2000
       );
       // After zoom completes, blur globe and show charts
@@ -492,7 +619,7 @@ export default function Home() {
         setShowCharts(true);
       }, 2200);
     } else {
-      // Airport not in our database — just show charts directly
+      // No coordinates available — just show charts directly
       setShowCharts(true);
     }
   }, []);
@@ -513,9 +640,23 @@ export default function Home() {
       if (json.error) throw new Error(json.error);
       setData(json.data);
       setSelectedMonths([]); // Reset months filter on new data load
+
+      // Extract lat/lon from API response for airports not in local DB or missing coords
+      const { airport } = findAirport(stationInput);
+      let fallbackCoords = null;
+      if ((!airport || airport.lat == null) && json.data.length > 0) {
+        const firstWithCoords = json.data.find(d => d.lat != null && d.lon != null);
+        if (firstWithCoords) {
+          fallbackCoords = { lat: firstWithCoords.lat, lng: firstWithCoords.lon };
+          setResolvedCoords({ lat: firstWithCoords.lat, lng: firstWithCoords.lon, code: stationInput.toUpperCase() });
+        }
+      } else {
+        setResolvedCoords(null);
+      }
+
       setActiveStation(stationInput.toUpperCase());
       // Zoom to the airport
-      zoomToAirport(stationInput);
+      zoomToAirport(stationInput, fallbackCoords);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -526,6 +667,7 @@ export default function Home() {
   const handleLogoClick = () => {
     setData([]);
     setActiveStation(null);
+    setResolvedCoords(null);
     setShowCharts(false);
     setSelectedMonths([]);
     setError(null);

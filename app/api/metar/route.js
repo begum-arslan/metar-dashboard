@@ -36,7 +36,7 @@ export async function GET(request) {
     iemUrl.searchParams.append('day2', day2);
     iemUrl.searchParams.append('tz', 'Etc/UTC');
     iemUrl.searchParams.append('format', 'onlycomma');
-    iemUrl.searchParams.append('latlon', 'no');
+    iemUrl.searchParams.append('latlon', 'yes');
     iemUrl.searchParams.append('missing', 'M');
     iemUrl.searchParams.append('trace', 'T');
     iemUrl.searchParams.append('direct', 'no');
@@ -67,6 +67,8 @@ export async function GET(request) {
           results.push({
             station: row.station,
             valid: row.valid, // Timestamp in UTC
+            lat: row.lat ? parseFloat(row.lat) : null,
+            lon: row.lon ? parseFloat(row.lon) : null,
             raw: row.metar,
             temperature: metarData.temperature?.celsius || null,
             dewpoint: metarData.dewpoint?.celsius || null,
