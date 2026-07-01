@@ -749,24 +749,6 @@ export default function Home() {
 
   return (
     <main className="app-main">
-      {/* Loading Screen */}
-      <div className={['loading-screen', globeReady && 'hidden'].filter(Boolean).join(' ')}>
-        <div className="loading-content">
-          <div className="loading-plane-track">
-            <svg className="loading-plane" viewBox="0 0 24 24" width="40" height="40">
-              <path fill="currentColor" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
-            </svg>
-            <div className="loading-plane-trail"></div>
-          </div>
-          <div className="loading-text">Preparing Globe</div>
-          <div className="loading-dots">
-            <span className="loading-dot"></span>
-            <span className="loading-dot"></span>
-            <span className="loading-dot"></span>
-          </div>
-        </div>
-      </div>
-
       <div className="main-layout">
 
         {/* LEFT PANEL — Controls & Tabs */}
@@ -949,6 +931,23 @@ export default function Home() {
 
         {/* RIGHT PANEL — Chart Overlay */}
         <div className="right-panel" ref={rightPanelRef}>
+          {/* Loading Screen — only covers the globe area */}
+          <div className={['loading-screen', globeReady && 'hidden'].filter(Boolean).join(' ')}>
+            <div className="loading-content">
+              <div className="loading-plane-track">
+                <svg className="loading-plane" viewBox="0 0 24 24" width="40" height="40">
+                  <path fill="currentColor" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
+                </svg>
+                <div className="loading-plane-trail"></div>
+              </div>
+              <div className="loading-text">Preparing Globe</div>
+              <div className="loading-dots">
+                <span className="loading-dot"></span>
+                <span className="loading-dot"></span>
+                <span className="loading-dot"></span>
+              </div>
+            </div>
+          </div>
           {/* Globe */}
           <div className={['globe-wrapper', showCharts && hasData ? 'blurred' : ''].filter(Boolean).join(' ')}>
             {mounted && globeSize.width > 0 && (
