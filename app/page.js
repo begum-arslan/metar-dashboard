@@ -365,6 +365,7 @@ export default function Home() {
   const rotationTimeoutRef = useRef(null);
   const globeMaterialRef = useRef(null);
   const [mounted, setMounted] = useState(false);
+  const [globeReady, setGlobeReady] = useState(false);
   const [globeSize, setGlobeSize] = useState({ width: 0, height: 0 });
 
   // Filter state for Months
@@ -585,6 +586,8 @@ export default function Home() {
             globeRef.current.pointOfView({ lat: 30, lng: 20, altitude: 2.5 }, 4000);
             startControlsLoop();
             clearInterval(interval);
+            // Mark globe as ready after a short delay for smooth transition
+            setTimeout(() => setGlobeReady(true), 800);
           }
         } catch (e) { /* controls not ready yet, keep polling */ }
       }
@@ -621,6 +624,22 @@ export default function Home() {
     } else {
       // No coordinates available — just show charts directly
       setShowCharts(true);
+    }
+  }, []);
+
+  // Close the analysis overlay and return to the globe
+  const closeAnalysis = useCallback(() => {
+    setShowCharts(false);
+    // Resume auto-rotation after closing
+    if (globeRef.current) {
+      try {
+        const controls = globeRef.current.controls();
+        if (controls) {
+          controls.autoRotate = true;
+          controls.autoRotateSpeed = 0.12;
+        }
+        globeRef.current.pointOfView({ lat: 30, lng: 20, altitude: 2.5 }, 1500);
+      } catch (e) { }
     }
   }, []);
 
@@ -730,6 +749,24 @@ export default function Home() {
 
   return (
     <main className="app-main">
+      {/* Loading Screen */}
+      <div className={['loading-screen', globeReady && 'hidden'].filter(Boolean).join(' ')}>
+        <div className="loading-content">
+          <div className="loading-plane-track">
+            <svg className="loading-plane" viewBox="0 0 24 24" width="40" height="40">
+              <path fill="currentColor" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"/>
+            </svg>
+            <div className="loading-plane-trail"></div>
+          </div>
+          <div className="loading-text">Preparing Globe</div>
+          <div className="loading-dots">
+            <span className="loading-dot"></span>
+            <span className="loading-dot"></span>
+            <span className="loading-dot"></span>
+          </div>
+        </div>
+      </div>
+
       <div className="main-layout">
 
         {/* LEFT PANEL — Controls & Tabs */}
@@ -1003,16 +1040,38 @@ export default function Home() {
             )}
           </div>
 
-          <div className={['chart-overlay', showCharts && hasData ? 'visible' : ''].filter(Boolean).join(' ')}>
-            {hasData && mainTab === 'charts' && (
-              <Charts data={processedData} />
-            )}
-            {hasData && mainTab === 'observations' && (
-              <ObservationsView data={processedData} activeTab={observationTab} />
-            )}
-            {hasData && mainTab === 'percentage' && (
-              <PercentageView data={processedData} activeTab={percentageTab} />
-            )}
+          {/* Close Button — outside overlay so it doesn't scroll with content */}
+          {showCharts && hasData && (
+            <button
+              className="chart-overlay-close"
+              onClick={closeAnalysis}
+              aria-label="Close analysis"
+              title="Close"
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M4.5 4.5L13.5 13.5M13.5 4.5L4.5 13.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+              </svg>
+            </button>
+          )}
+
+          <div
+            className={['chart-overlay', showCharts && hasData ? 'visible' : ''].filter(Boolean).join(' ')}
+            onClick={(e) => {
+              // Close when clicking the backdrop (not the content)
+              if (e.target === e.currentTarget) closeAnalysis();
+            }}
+          >
+            <div className="chart-overlay-content" onClick={(e) => e.stopPropagation()}>
+              {hasData && mainTab === 'charts' && (
+                <Charts data={processedData} />
+              )}
+              {hasData && mainTab === 'observations' && (
+                <ObservationsView data={processedData} activeTab={observationTab} />
+              )}
+              {hasData && mainTab === 'percentage' && (
+                <PercentageView data={processedData} activeTab={percentageTab} />
+              )}
+            </div>
           </div>
         </div>
       </div>

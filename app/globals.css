@@ -419,6 +419,48 @@ input:focus {
   pointer-events: auto;
 }
 
+/* Close Button — positioned in right-panel, outside the scrollable overlay */
+.chart-overlay-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  z-index: 60;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 10, 10, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+}
+
+.chart-overlay-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  transform: scale(1.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.chart-overlay-close:active {
+  transform: scale(0.95);
+}
+
+/* Content wrapper inside overlay (for click-outside detection) */
+.chart-overlay-content {
+  position: relative;
+  z-index: 15;
+  padding-top: 20px;
+}
+
 .chart-overlay::-webkit-scrollbar {
   width: 6px;
 }
@@ -565,5 +607,149 @@ input:focus {
 
   .glass-container {
     padding: 16px;
+  }
+}
+
+/* ===== Loading Screen ===== */
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 9999;
+  background: #050505;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+.loading-screen.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+/* Airplane track */
+.loading-plane-track {
+  position: relative;
+  width: 200px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-plane {
+  color: rgba(255, 255, 255, 0.7);
+  animation: plane-fly 2.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(148, 163, 184, 0.4));
+  position: relative;
+  z-index: 2;
+}
+
+.loading-plane-trail {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  right: 60%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.3));
+  border-radius: 2px;
+  animation: trail-follow 2.2s ease-in-out infinite;
+}
+
+@keyframes plane-fly {
+  0% {
+    transform: translateX(-80px) translateY(4px);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(0px) translateY(-4px);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(80px) translateY(4px);
+    opacity: 0;
+  }
+}
+
+@keyframes trail-follow {
+  0% {
+    left: 10%;
+    right: 80%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+  }
+  50% {
+    left: 30%;
+    right: 40%;
+    opacity: 0.4;
+  }
+  80% {
+    opacity: 0.2;
+  }
+  100% {
+    left: 70%;
+    right: 10%;
+    opacity: 0;
+  }
+}
+
+.loading-text {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.loading-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.loading-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  animation: dot-pulse 1.4s ease-in-out infinite;
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dot-pulse {
+  0%, 80%, 100% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.4);
   }
 }
