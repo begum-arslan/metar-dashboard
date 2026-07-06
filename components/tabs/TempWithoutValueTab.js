@@ -119,13 +119,13 @@ export default function TempWithoutValueTab({ data }) {
               onChange={e => setPercentileInput(e.target.value)}
               className="glass-input"
             >
-              <option value="100">%100 (Tümü)</option>
+              <option value="100">100% (All)</option>
               <option value="90">%90</option>
               <option value="75">%75</option>
               <option value="50">%50</option>
             </select>
             <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
-              Seçilen yüzde dışındaki uç değerler (outliers) hesaplamaya katılmaz.
+              Outliers outside the selected percentile are excluded from calculations.
             </small>
           </div>
 
@@ -173,31 +173,10 @@ export default function TempWithoutValueTab({ data }) {
                 />
                 <Legend verticalAlign="top" height={36} iconType="rect" align="center" wrapperStyle={{ marginBottom: '16px' }} />
                 
-                {/* Max: Pink, Avg: Yellow, Min: Blue */}
-                <Bar 
-                  dataKey="Max" 
-                  fill="rgba(251, 113, 133, 0.2)" 
-                  stroke="#fb7185" 
-                  strokeWidth={1} 
-                  name="Max" 
-                  radius={[2, 2, 0, 0]} 
-                />
-                <Bar 
-                  dataKey="Avg" 
-                  fill="rgba(250, 204, 21, 0.2)" 
-                  stroke="#facc15" 
-                  strokeWidth={1} 
-                  name="Avg" 
-                  radius={[2, 2, 0, 0]} 
-                />
-                <Bar 
-                  dataKey="Min" 
-                  fill="rgba(96, 165, 250, 0.2)" 
-                  stroke="#60a5fa" 
-                  strokeWidth={1} 
-                  name="Min" 
-                  radius={[2, 2, 0, 0]} 
-                />
+                {/* Max: Pink, Avg: Amber, Min: Blue */}
+                <Bar dataKey="Max" fill="#fb7185" name="Max" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Avg" fill="#fbbf24" name="Avg" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Min" fill="#60a5fa" name="Min" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

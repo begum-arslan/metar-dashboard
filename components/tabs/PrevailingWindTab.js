@@ -17,15 +17,20 @@ const getCardinal = (deg) => {
 };
 
 const SPEED_BINS = [
-  { label: '0-<5', min: 0, max: 5, color: '#0ea5e9' },
-  { label: '5-10', min: 5, max: 10, color: '#10b981' },
-  { label: '10-15', min: 10, max: 15, color: '#84cc16' },
-  { label: '15-20', min: 15, max: 20, color: '#eab308' },
-  { label: '20-25', min: 20, max: 25, color: '#f59e0b' },
-  { label: '25-30', min: 25, max: 30, color: '#f97316' },
-  { label: '30-35', min: 30, max: 35, color: '#ef4444' },
-  { label: '35+', min: 35, max: 999, color: '#9f1239' }
+  { label: '0-<5',  min: 0,  max: 5,   color: '#1a3c5c' },
+  { label: '5-10',  min: 5,  max: 10,  color: '#2b7eb8' },
+  { label: '10-15', min: 10, max: 15,  color: '#6cc4b4' },
+  { label: '15-20', min: 15, max: 20,  color: '#a0d9a4' },
+  { label: '20-25', min: 20, max: 25,  color: '#e8f098' },
+  { label: '25-30', min: 25, max: 30,  color: '#f5d76e' },
+  { label: '30-35', min: 30, max: 35,  color: '#f2994a' },
+  { label: '35-40', min: 35, max: 40,  color: '#e74c3c' },
+  { label: '40+',   min: 40, max: 999, color: '#7b1a2c' }
 ];
+
+// 36 sectors at every 10° for the wind rose
+const DEGREE_SECTORS = Array.from({ length: 36 }, (_, i) => (i + 1) * 10); // [10, 20, ..., 360]
+const ORDERED_SECTORS = [360, ...DEGREE_SECTORS.filter(d => d !== 360)];   // [360, 10, 20, ..., 350]
 
 export default function PrevailingWindTab({ data }) {
   const [subTab, setSubTab] = useState('ObsMaxAvg'); // 'Wind Rose', 'ObsMaxAvg', 'Hourly Wind'
@@ -73,9 +78,9 @@ export default function PrevailingWindTab({ data }) {
     }
 
     let roseBuckets = {};
-    DIRECTIONS.forEach(d => {
-      roseBuckets[d] = { direction: d };
-      SPEED_BINS.forEach(b => roseBuckets[d][b.label] = 0);
+    DEGREE_SECTORS.forEach(deg => {
+      roseBuckets[deg] = {};
+      SPEED_BINS.forEach(b => roseBuckets[deg][b.label] = 0);
     });
 
     filtered.forEach(d => {
@@ -99,9 +104,10 @@ export default function PrevailingWindTab({ data }) {
         const card = getCardinal(deg);
         if (hourBuckets[hr] && card !== 'VRB') hourBuckets[hr][card]++;
 
-        if (card !== 'VRB' && roseBuckets[card]) {
+        // Wind rose: bucket by 10° degree bin directly (absolute counts)
+        if (roseBuckets[bin]) {
           const matchedBin = SPEED_BINS.find(b => spd >= b.min && spd < b.max) || SPEED_BINS[SPEED_BINS.length - 1];
-          roseBuckets[card][matchedBin.label]++;
+          roseBuckets[bin][matchedBin.label]++;
         }
       }
     });
@@ -114,10 +120,11 @@ export default function PrevailingWindTab({ data }) {
     })).sort((a,b) => a.direction - b.direction);
 
     const hourlyWindDataResult = Object.keys(hourBuckets).map(k => hourBuckets[k]);
-    const windRoseDataResult = DIRECTIONS.map(d => {
-      let bucket = { direction: d };
+    // Wind rose data: ordered [360°, 10°, 20°, ..., 350°] with absolute observation counts
+    const windRoseDataResult = ORDERED_SECTORS.map(deg => {
+      let bucket = { direction: deg };
       SPEED_BINS.forEach(b => {
-        bucket[b.label] = totalsObj.rec > 0 ? parseFloat(((roseBuckets[d][b.label] / totalsObj.rec) * 100).toFixed(2)) : 0;
+        bucket[b.label] = roseBuckets[deg]?.[b.label] || 0;
       });
       return bucket;
     });
@@ -169,48 +176,107 @@ export default function PrevailingWindTab({ data }) {
             </div>
           </div>
           
-          <div style={{ height: '400px', width: '100%' }}>
+          <div style={{ height: subTab === 'Wind Rose' ? '540px' : '400px', width: '100%' }}>
             {subTab === 'Wind Rose' && (
               <ReactECharts 
                 option={{
+                  title: {
+                    text: `Wind Rose (Rec. Total: ${totals.rec.toLocaleString()} / Vrb. Total: ${totals.vrb.toLocaleString()} (${(totals.rec ? (totals.vrb / totals.rec) * 100 : 0).toFixed(1)}%) )`,
+                    left: 'center',
+                    top: 5,
+                    textStyle: { color: '#94a3b8', fontSize: 13, fontWeight: 500 }
+                  },
                   tooltip: {
                     trigger: 'item',
-                    formatter: (params) => `${params.name} <br/> Speed ${params.seriesName}KT: <b>${params.value}%</b>`
+                    backgroundColor: 'rgba(15, 15, 25, 0.92)',
+                    borderColor: 'rgba(255,255,255,0.12)',
+                    textStyle: { color: '#e2e8f0', fontSize: 12 },
+                    formatter: (params) => {
+                      const dir = typeof params.name === 'string' ? params.name.replace('°', '') : params.name;
+                      
+                      let cumulativeValue = 0;
+                      const bucket = windRoseData.find(d => d.direction == dir);
+                      if (bucket) {
+                        for (let bin of SPEED_BINS) {
+                          cumulativeValue += bucket[bin.label] || 0;
+                          if (bin.label === params.seriesName) break;
+                        }
+                      }
+                      
+                      // Format with tr-TR to show dot as thousand separator like the legacy system
+                      return `t: ${dir}, r: ${cumulativeValue.toLocaleString('tr-TR')}<br/><span style="color:${params.color}">■</span> ${params.seriesName} kt`;
+                    }
                   },
                   legend: {
-                    top: 0,
-                    textStyle: { color: '#94a3b8' },
+                    orient: 'vertical',
+                    right: 8,
+                    top: 40,
+                    itemWidth: 12,
+                    itemHeight: 12,
+                    textStyle: { color: '#94a3b8', fontSize: 11 },
                     data: SPEED_BINS.map(b => b.label)
                   },
+                  graphic: [{
+                    type: 'text',
+                    right: 5,
+                    top: 24,
+                    style: {
+                      text: 'Wind Speed (knots)',
+                      fill: '#94a3b8',
+                      fontSize: 12,
+                      fontWeight: 'bold'
+                    }
+                  }],
                   polar: {
-                    radius: '75%',
-                    center: ['50%', '55%']
+                    radius: '68%',
+                    center: ['44%', '54%']
                   },
                   angleAxis: {
                     type: 'category',
-                    data: DIRECTIONS,
-                    startAngle: 101.25,
+                    data: ORDERED_SECTORS.map(d => `${d}°`),
+                    startAngle: 90,
                     clockwise: true,
                     boundaryGap: true,
-                    splitLine: { show: true, lineStyle: { color: 'rgba(255,255,255,0.1)' } },
-                    axisLabel: { color: '#94a3b8' }
+                    axisLine: { lineStyle: { color: 'rgba(255,255,255,0.15)' } },
+                    axisTick: { show: false },
+                    splitLine: {
+                      show: true,
+                      interval: 2,
+                      lineStyle: { color: 'rgba(255,255,255,0.08)' }
+                    },
+                    axisLabel: {
+                      interval: 2,
+                      color: '#94a3b8',
+                      fontSize: 11,
+                      margin: 8
+                    }
                   },
                   radiusAxis: {
                     axisLine: { show: false },
-                    axisLabel: { color: '#94a3b8', formatter: '{value}%' },
-                    splitLine: { show: true, lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+                    axisTick: { show: false },
+                    axisLabel: {
+                      color: '#94a3b8',
+                      fontSize: 10,
+                      formatter: (val) => val >= 1000 ? val.toLocaleString() : (val === 0 ? '' : val)
+                    },
+                    splitLine: {
+                      show: true,
+                      lineStyle: { color: 'rgba(255,255,255,0.12)', type: 'solid' }
+                    },
+                    splitNumber: 4
                   },
                   series: SPEED_BINS.map(bin => ({
                     type: 'bar',
                     data: windRoseData.map(d => d[bin.label]),
                     coordinateSystem: 'polar',
                     name: bin.label,
-                    stack: 'a',
-                    itemStyle: { color: bin.color },
-                    emphasis: { focus: 'series' }
+                    stack: 'wind',
+                    itemStyle: { color: bin.color, borderColor: bin.color, borderWidth: 0.5 },
+                    emphasis: { focus: 'series', blurScope: 'coordinateSystem' },
+                    barCategoryGap: '5%'
                   }))
                 }}
-                style={{ height: '400px', width: '100%' }}
+                style={{ height: '540px', width: '100%' }}
               />
             )}
             
@@ -225,7 +291,7 @@ export default function PrevailingWindTab({ data }) {
                     <Tooltip contentStyle={{ backgroundColor: 'var(--secondary)', border: '1px solid var(--card-border)', borderRadius: '8px' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} formatter={(val, name) => [name === 'Observations' ? val : val + 'KT', name]} labelFormatter={(label) => `${label}°`} />
                     <Legend verticalAlign="top" height={36} iconType="rect" align="center" wrapperStyle={{ marginBottom: '16px' }} />
                     
-                    <Bar yAxisId="right" dataKey="Observations" fill="rgba(167, 139, 250, 0.4)" name="Observations" radius={[2, 2, 0, 0]} />
+                    <Bar yAxisId="right" dataKey="Observations" fill="#a78bfa" name="Observations" radius={[2, 2, 0, 0]} />
                     <Line yAxisId="left" type="monotone" dataKey="Max" stroke="#f43f5e" strokeWidth={2} dot={true} />
                     <Line yAxisId="left" type="monotone" dataKey="Avg" stroke="#3b82f6" strokeWidth={2} dot={true} />
                   </ComposedChart>

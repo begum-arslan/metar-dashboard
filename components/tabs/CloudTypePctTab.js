@@ -137,14 +137,14 @@ export default function CloudTypePctTab({ data }) {
         <div className="glass-container" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
           <div className="form-group" style={{ marginBottom: 0, position: 'relative' }}>
-            <label>Closure Rate (Bulut Kapalılığı)</label>
+            <label>Cloud Coverage</label>
             <div 
               onClick={() => setIsCoverageOpen(!isCoverageOpen)}
               style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '1rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             >
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {selectedCoverages.length === 0 ? (
-                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>Tümü</span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>All</span>
                 ) : (
                   selectedCoverages.map(cov => (
                     <span key={cov} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>{cov} ✕</span>
@@ -166,14 +166,14 @@ export default function CloudTypePctTab({ data }) {
           </div>
 
           <div className="form-group" style={{ marginBottom: 0, position: 'relative' }}>
-            <label>Cloud Type (Bulut Tipi)</label>
+            <label>Cloud Type</label>
             <div 
               onClick={() => setIsTypeOpen(!isTypeOpen)}
               style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '1rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             >
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {selectedTypes.length === 0 ? (
-                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>Tümü</span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>All</span>
                 ) : (
                   selectedTypes.map(typ => (
                     <span key={typ} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>{typ} ✕</span>
@@ -230,7 +230,7 @@ export default function CloudTypePctTab({ data }) {
           
           {appliedCoverages === null ? (
             <div style={{ height: '350px', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--text-muted)' }}>
-              Lütfen sol panelden Bulut Tipi kriterlerini belirleyip Run butonuna basın.
+              Please set Cloud Type criteria from the left panel and press Run.
             </div>
           ) : (
             <div style={{ height: '350px', width: '100%' }}>
@@ -259,14 +259,7 @@ export default function CloudTypePctTab({ data }) {
                   />
                   <Legend verticalAlign="top" height={36} iconType="rect" align="center" wrapperStyle={{ marginBottom: '16px' }} />
                   
-                  <Bar 
-                    dataKey="Rate" 
-                    fill="rgba(251, 113, 133, 0.25)" 
-                    stroke="#fb7185" 
-                    strokeWidth={1} 
-                    name="Ratio" 
-                    radius={[2, 2, 0, 0]} 
-                  />
+                  <Bar dataKey="Rate" fill="#fb7185" name="Ratio" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

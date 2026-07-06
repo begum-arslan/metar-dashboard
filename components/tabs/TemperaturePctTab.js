@@ -169,7 +169,7 @@ export default function TemperaturePctTab({ data }) {
           
           {appliedFilters === null ? (
             <div style={{ height: '350px', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'var(--text-muted)' }}>
-              Lütfen sol panelden minimum ve maksimum sıcaklık değerlerini girip Run butonuna basın.
+              Please set min and max temperature values from the left panel and press Run.
             </div>
           ) : (
             <div style={{ height: '350px', width: '100%' }}>
@@ -198,14 +198,7 @@ export default function TemperaturePctTab({ data }) {
                   />
                   <Legend verticalAlign="top" height={36} iconType="rect" align="center" wrapperStyle={{ marginBottom: '16px' }} />
                   
-                  <Bar 
-                    dataKey="Rate" 
-                    fill="rgba(251, 113, 133, 0.25)" 
-                    stroke="#fb7185" 
-                    strokeWidth={1} 
-                    name="Ratio" 
-                    radius={[2, 2, 0, 0]} 
-                  />
+                  <Bar dataKey="Rate" fill="#fb7185" name="Ratio" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -243,14 +243,7 @@ export default function PhenomenaPctTab({ data }) {
                 />
                 <Legend verticalAlign="top" height={36} iconType="rect" align="center" wrapperStyle={{ marginBottom: '16px' }} />
                 
-                <Bar 
-                  dataKey="Rate" 
-                  fill="rgba(251, 113, 133, 0.25)" 
-                  stroke="#fb7185" 
-                  strokeWidth={1} 
-                  name="Ratio" 
-                  radius={[2, 2, 0, 0]} 
-                />
+                <Bar dataKey="Rate" fill="#fb7185" name="Ratio" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

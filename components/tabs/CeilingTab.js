@@ -134,7 +134,7 @@ export default function CeilingTab({ data }) {
           </div>
 
           <div className="form-group" style={{ marginBottom: 0, position: 'relative' }}>
-            <label>Closure Rate (Bulut Kapalılığı)</label>
+            <label>Cloud Coverage</label>
             <div 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               style={{
@@ -152,7 +152,7 @@ export default function CeilingTab({ data }) {
             >
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {selectedCoverages.length === 0 ? (
-                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>Tümü (All)</span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>All</span>
                 ) : (
                   selectedCoverages.map(cov => (
                     <span key={cov} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>
@@ -241,22 +241,8 @@ export default function CeilingTab({ data }) {
                 <Legend verticalAlign="top" height={36} iconType="rect" align="center" wrapperStyle={{ marginBottom: '16px' }} />
                 
                 {/* Match mockup colors exactly: light fill with solid border */}
-                <Bar 
-                  dataKey="Observations" 
-                  fill="rgba(251, 113, 133, 0.2)" 
-                  stroke="#fb7185" 
-                  strokeWidth={1} 
-                  name="Observations" 
-                  radius={[2, 2, 0, 0]} 
-                />
-                <Bar 
-                  dataKey="Days" 
-                  fill="rgba(96, 165, 250, 0.2)" 
-                  stroke="#60a5fa" 
-                  strokeWidth={1} 
-                  name="Days" 
-                  radius={[2, 2, 0, 0]} 
-                />
+                <Bar dataKey="Observations" fill="#fb7185" name="Observations" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Days" fill="#60a5fa" name="Days" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

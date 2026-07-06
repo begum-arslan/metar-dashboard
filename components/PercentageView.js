@@ -52,7 +52,7 @@ export default function PercentageView({ data, activeTab }) {
         {/* Future percentage tabs will be added here */}
         {activeTab !== 'visibility_pct' && activeTab !== 'visibility_stations_pct' && activeTab !== 'phenomena_query_pct' && activeTab !== 'ceiling_pct' && activeTab !== 'head_tail_wind_pct' && activeTab !== 'vis_head_tail_wind_pct' && activeTab !== 'cloud_type_pct' && activeTab !== 'temperature_pct' && activeTab !== 'pressure_pct' && (
           <div className="glass-container" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-            <p>Bu sekme yakında eklenecektir...</p>
+            <p>This tab will be available soon...</p>
           </div>
         )}
       </div>

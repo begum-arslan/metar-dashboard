@@ -168,22 +168,8 @@ export default function PressureTab({ data }) {
                 />
                 <Legend verticalAlign="top" height={36} iconType="rect" align="center" wrapperStyle={{ marginBottom: '16px' }} />
                 
-                <Bar 
-                  dataKey="Days" 
-                  fill="rgba(96, 165, 250, 0.2)" 
-                  stroke="#60a5fa" 
-                  strokeWidth={1} 
-                  name="Days" 
-                  radius={[2, 2, 0, 0]} 
-                />
-                <Bar 
-                  dataKey="Observations" 
-                  fill="rgba(251, 113, 133, 0.2)" 
-                  stroke="#fb7185" 
-                  strokeWidth={1} 
-                  name="Observations" 
-                  radius={[2, 2, 0, 0]} 
-                />
+                <Bar dataKey="Days" fill="#60a5fa" name="Days" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Observations" fill="#fb7185" name="Observations" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
