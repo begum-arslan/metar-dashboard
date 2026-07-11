@@ -17,15 +17,15 @@ const getCardinal = (deg) => {
 };
 
 const SPEED_BINS = [
-  { label: '0-<5',  min: 0,  max: 5,   color: '#1a3c5c' },
-  { label: '5-10',  min: 5,  max: 10,  color: '#2b7eb8' },
-  { label: '10-15', min: 10, max: 15,  color: '#6cc4b4' },
-  { label: '15-20', min: 15, max: 20,  color: '#a0d9a4' },
-  { label: '20-25', min: 20, max: 25,  color: '#e8f098' },
-  { label: '25-30', min: 25, max: 30,  color: '#f5d76e' },
-  { label: '30-35', min: 30, max: 35,  color: '#f2994a' },
-  { label: '35-40', min: 35, max: 40,  color: '#e74c3c' },
-  { label: '40+',   min: 40, max: 999, color: '#7b1a2c' }
+  { label: '0 ≤ Wₛ < 5',   min: 0,  max: 5,   color: '#1a3c5c' },
+  { label: '5 ≤ Wₛ < 10',  min: 5,  max: 10,  color: '#2b7eb8' },
+  { label: '10 ≤ Wₛ < 15', min: 10, max: 15,  color: '#6cc4b4' },
+  { label: '15 ≤ Wₛ < 20', min: 15, max: 20,  color: '#a0d9a4' },
+  { label: '20 ≤ Wₛ < 25', min: 20, max: 25,  color: '#e8f098' },
+  { label: '25 ≤ Wₛ < 30', min: 25, max: 30,  color: '#f5d76e' },
+  { label: '30 ≤ Wₛ < 35', min: 30, max: 35,  color: '#f2994a' },
+  { label: '35 ≤ Wₛ < 40', min: 35, max: 40,  color: '#e74c3c' },
+  { label: 'Wₛ ≥ 40',      min: 40, max: 999, color: '#7b1a2c' }
 ];
 
 // 36 sectors at every 10° for the wind rose
