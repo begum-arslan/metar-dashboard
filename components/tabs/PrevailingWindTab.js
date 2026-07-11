@@ -120,11 +120,14 @@ export default function PrevailingWindTab({ data }) {
     })).sort((a,b) => a.direction - b.direction);
 
     const hourlyWindDataResult = Object.keys(hourBuckets).map(k => hourBuckets[k]);
-    // Wind rose data: ordered [360°, 10°, 20°, ..., 350°] with absolute observation counts
+    // Wind rose data: ordered [360°, 10°, 20°, ..., 350°] with percentage frequency
+    const totalNonVRB = totalsObj.rec - totalsObj.vrb;
     const windRoseDataResult = ORDERED_SECTORS.map(deg => {
       let bucket = { direction: deg };
       SPEED_BINS.forEach(b => {
-        bucket[b.label] = roseBuckets[deg]?.[b.label] || 0;
+        const raw = roseBuckets[deg]?.[b.label] || 0;
+        bucket[b.label] = totalNonVRB > 0 ? parseFloat(((raw / totalNonVRB) * 100).toFixed(4)) : 0;
+        bucket[`${b.label}_raw`] = raw;
       });
       return bucket;
     });
@@ -184,7 +187,7 @@ export default function PrevailingWindTab({ data }) {
                     text: `Wind Rose (Rec. Total: ${totals.rec.toLocaleString()} / Vrb. Total: ${totals.vrb.toLocaleString()} (${(totals.rec ? (totals.vrb / totals.rec) * 100 : 0).toFixed(1)}%) )`,
                     left: 'center',
                     top: 5,
-                    textStyle: { color: '#94a3b8', fontSize: 13, fontWeight: 500 }
+                    textStyle: { color: '#64748b', fontSize: 13, fontWeight: 500 }
                   },
                   tooltip: {
                     trigger: 'item',
@@ -192,19 +195,34 @@ export default function PrevailingWindTab({ data }) {
                     borderColor: 'rgba(255,255,255,0.12)',
                     textStyle: { color: '#e2e8f0', fontSize: 12 },
                     formatter: (params) => {
+                      if (!params || !params.name || !params.seriesName || params.componentType !== 'series') {
+                        return '';
+                      }
                       const dir = typeof params.name === 'string' ? params.name.replace('°', '') : params.name;
                       
-                      let cumulativeValue = 0;
                       const bucket = windRoseData.find(d => d.direction == dir);
+                      const binPct = params.value || 0;
+                      const binRaw = bucket ? (bucket[`${params.seriesName}_raw`] || 0) : 0;
+                      
+                      // Sector total for context
+                      let sectorTotal = 0;
                       if (bucket) {
                         for (let bin of SPEED_BINS) {
-                          cumulativeValue += bucket[bin.label] || 0;
-                          if (bin.label === params.seriesName) break;
+                          sectorTotal += bucket[bin.label] || 0;
                         }
                       }
                       
-                      // Format with tr-TR to show dot as thousand separator like the legacy system
-                      return `t: ${dir}, r: ${cumulativeValue.toLocaleString('tr-TR')}<br/><span style="color:${params.color}">■</span> ${params.seriesName} kt`;
+                      let pctDisplay = '';
+                      if (binPct === 0) {
+                        pctDisplay = '0.00%';
+                      } else if (binPct < 0.01) {
+                        pctDisplay = '<0.01%';
+                      } else {
+                        pctDisplay = `${binPct.toFixed(2)}%`;
+                      }
+                      
+                      const valStr = `: ${pctDisplay} (${binRaw.toLocaleString('tr-TR')} obs)`;
+                      return `<b>${dir}°</b> | <span style="color:${params.color}">■</span> ${params.seriesName} kt${valStr}<br/>Tüm Hızlar: ${sectorTotal.toFixed(2)}%`;
                     }
                   },
                   legend: {
@@ -213,7 +231,7 @@ export default function PrevailingWindTab({ data }) {
                     top: 40,
                     itemWidth: 12,
                     itemHeight: 12,
-                    textStyle: { color: '#94a3b8', fontSize: 11 },
+                    textStyle: { color: '#64748b', fontSize: 11 },
                     data: SPEED_BINS.map(b => b.label)
                   },
                   graphic: [{
@@ -222,7 +240,7 @@ export default function PrevailingWindTab({ data }) {
                     top: 24,
                     style: {
                       text: 'Wind Speed (knots)',
-                      fill: '#94a3b8',
+                      fill: '#64748b',
                       fontSize: 12,
                       fontWeight: 'bold'
                     }
@@ -246,7 +264,7 @@ export default function PrevailingWindTab({ data }) {
                     },
                     axisLabel: {
                       interval: 2,
-                      color: '#94a3b8',
+                      color: '#64748b',
                       fontSize: 11,
                       margin: 8
                     }
@@ -254,10 +272,12 @@ export default function PrevailingWindTab({ data }) {
                   radiusAxis: {
                     axisLine: { show: false },
                     axisTick: { show: false },
+                    axisPointer: { show: true, label: { show: false }, lineStyle: { color: 'rgba(255,255,255,0.4)', width: 1 } },
                     axisLabel: {
-                      color: '#94a3b8',
-                      fontSize: 10,
-                      formatter: (val) => val >= 1000 ? val.toLocaleString() : (val === 0 ? '' : val)
+                      color: '#e2e8f0',
+                      fontSize: 11,
+                      fontWeight: 'bold',
+                      formatter: (val) => val === 0 ? '' : `${val}%`
                     },
                     splitLine: {
                       show: true,
@@ -272,7 +292,7 @@ export default function PrevailingWindTab({ data }) {
                     name: bin.label,
                     stack: 'wind',
                     itemStyle: { color: bin.color, borderColor: bin.color, borderWidth: 0.5 },
-                    emphasis: { focus: 'series', blurScope: 'coordinateSystem' },
+                    emphasis: { focus: 'self' },
                     barCategoryGap: '5%'
                   }))
                 }}
