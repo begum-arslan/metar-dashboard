@@ -756,7 +756,8 @@ export default function Home() {
           {/* Title */}
           <div>
             <h1 className="top-title" onClick={handleLogoClick}>
-              Operational Dashboard
+              <span className="top-title-brand">AeroNova</span>
+              <span className="top-title-accent">Aviation Meteorology Analytics</span>
             </h1>
           </div>
 
@@ -868,19 +869,19 @@ export default function Home() {
             <div className="vertical-tabs">
               <button
                 className={`tab-btn ${mainTab === 'observations' ? 'active' : ''}`}
-                onClick={() => setMainTab('observations')}
+                onClick={() => { setMainTab('observations'); if (hasData) setShowCharts(true); }}
               >
                 📋 Observations
               </button>
               <button
                 className={`tab-btn ${mainTab === 'percentage' ? 'active' : ''}`}
-                onClick={() => setMainTab('percentage')}
+                onClick={() => { setMainTab('percentage'); if (hasData) setShowCharts(true); }}
               >
                 % Percentage
               </button>
               <button
                 className={`tab-btn ${mainTab === 'charts' ? 'active' : ''}`}
-                onClick={() => setMainTab('charts')}
+                onClick={() => { setMainTab('charts'); if (hasData) setShowCharts(true); }}
               >
                 📊 General Charts
               </button>
@@ -896,7 +897,7 @@ export default function Home() {
                   <button
                     key={tab.id}
                     className={`tab-btn ${observationTab === tab.id ? 'active' : ''}`}
-                    onClick={() => setObservationTab(tab.id)}
+                    onClick={() => { setObservationTab(tab.id); if (hasData) setShowCharts(true); }}
                   >
                     {tab.label}
                   </button>
@@ -914,7 +915,7 @@ export default function Home() {
                   <button
                     key={tab.id}
                     className={`tab-btn ${percentageTab === tab.id ? 'active' : ''}`}
-                    onClick={() => setPercentageTab(tab.id)}
+                    onClick={() => { setPercentageTab(tab.id); if (hasData) setShowCharts(true); }}
                   >
                     {tab.label}
                   </button>

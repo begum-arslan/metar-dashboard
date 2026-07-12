@@ -346,30 +346,66 @@ input:focus {
 .top-title {
   font-size: 1.1rem;
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 3px;
   color: rgba(255, 255, 255, 0.6);
   margin-bottom: 4px;
   cursor: pointer;
-  transition: color 0.25s ease;
+  transition: all 0.35s ease;
 }
 
 .top-title:hover {
   color: rgba(255, 255, 255, 0.95);
 }
 
+/* Brand name with gradient shimmer */
+.top-title-brand {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-transform: none;
+  background: linear-gradient(
+    120deg,
+    rgba(213, 194, 149, 0.7) 0%,
+    rgba(255, 255, 255, 0.95) 25%,
+    rgba(147, 197, 253, 0.8) 50%,
+    rgba(255, 255, 255, 0.95) 75%,
+    rgba(213, 194, 149, 0.7) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: title-shimmer 16s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(213, 194, 149, 0.15));
+  transition: filter 0.35s ease;
+}
+
+.top-title:hover .top-title-brand {
+  filter: drop-shadow(0 0 20px rgba(213, 194, 149, 0.35));
+  animation-duration: 8s;
+}
+
+@keyframes title-shimmer {
+  0% { background-position: 100% 50%; }
+  50% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
 .top-title-accent {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 500;
-  letter-spacing: 2px;
-  color: rgba(255, 255, 255, 0.3);
-  margin-top: 4px;
-  transition: color 0.25s ease;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+  margin-top: 6px;
+  transition: all 0.35s ease;
 }
 
 .top-title:hover .top-title-accent {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 3px;
 }
 
 .right-panel {

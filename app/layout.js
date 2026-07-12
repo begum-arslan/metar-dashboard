@@ -12,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Operational Dashboard",
-  description: "Global METAR/SPECI Operational Dashboard",
+  title: "AeroNova | Aviation Meteorology Analytics",
+  description: "AeroNova — Aviation Meteorology Analytics. Analyze global METAR/SPECI observations with interactive charts and historical insights.",
 };
 
 export default function RootLayout({ children }) {
