@@ -253,8 +253,7 @@ const getHtmlElement = (d) => {
       ? 'linear-gradient(135deg, #e8d5a8, #c9a96e)'
       : 'linear-gradient(135deg, #bfdbfe, #60a5fa)';
     const destRingColor = isDay ? 'rgba(213, 194, 149,' : 'rgba(147, 197, 253,';
-    const destName = d.name || '';
-    const destCode = destName.match(/\(([A-Z]{3})\)/)?.[1] || '';
+    const destCode = d.iata || '';
 
     el.innerHTML = `
       <!-- Outer pulse ring -->
@@ -462,7 +461,8 @@ export default function Home() {
         lat: activeAirportObj.lat,
         lng: activeAirportObj.lng,
         type: 'destination',
-        name: `${activeAirportObj.name} (${activeAirportObj.iata})`,
+        name: activeAirportObj.name,
+        iata: activeAirportObj.iata || activeAirportObj.icao || '',
         isDayTime
       });
     }
