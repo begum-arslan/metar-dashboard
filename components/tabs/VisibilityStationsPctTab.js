@@ -21,7 +21,7 @@ const MONTHS_OPTIONS = [
 const COLORS = ['#3b82f6', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
 
 export default function VisibilityStationsPctTab() {
-  const [stationsInput, setStationsInput] = useState('LTBA, LTFM, LTCG');
+  const [stationsInput, setStationsInput] = useState('');
   
   const today = new Date();
   const past = new Date();
@@ -32,7 +32,7 @@ export default function VisibilityStationsPctTab() {
   const [selectedMonths, setSelectedMonths] = useState([]);
   const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
   
-  const [thresholdInput, setThresholdInput] = useState('1000');
+  const [thresholdInput, setThresholdInput] = useState('');
   const [appliedThreshold, setAppliedThreshold] = useState(1000);
   
   const [timeGroup, setTimeGroup] = useState('Hourly'); // 'Hourly', 'Monthly', 'Yearly'
@@ -188,6 +188,7 @@ export default function VisibilityStationsPctTab() {
               type="text" 
               value={stationsInput} 
               onChange={e => setStationsInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleRun(); }}
               placeholder="e.g. LTBA, LTFM, LTCG"
             />
           </div>
@@ -195,11 +196,11 @@ export default function VisibilityStationsPctTab() {
           <div className="form-row">
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label htmlFor="startDt">Start Date</label>
-              <input type="date" id="startDt" value={startDate} onChange={e => setStartDate(e.target.value)} required />
+              <input type="date" id="startDt" value={startDate} onChange={e => setStartDate(e.target.value)} required onKeyDown={e => { if (e.key === 'Enter') handleRun(); }} />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label htmlFor="endDt">End Date</label>
-              <input type="date" id="endDt" value={endDate} onChange={e => setEndDate(e.target.value)} required />
+              <input type="date" id="endDt" value={endDate} onChange={e => setEndDate(e.target.value)} required onKeyDown={e => { if (e.key === 'Enter') handleRun(); }} />
             </div>
           </div>
 
@@ -242,6 +243,7 @@ export default function VisibilityStationsPctTab() {
               type="number" 
               value={thresholdInput} 
               onChange={e => setThresholdInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleRun(); }}
               placeholder="e.g. 1000"
             />
           </div>

@@ -1,11 +1,14 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { parseISO } from 'date-fns';
+import { generateOpsmetReport } from '@/utils/excelExport';
+import { exportGraphAsPNG } from '@/utils/exportGraph';
 
-export default function TemperatureTab({ data }) {
-  const [minTempInput, setMinTempInput] = useState('-3');
-  const [maxTempInput, setMaxTempInput] = useState('5');
+export default function TemperatureTab({ data, reportInfo }) {
+  const chartRef = useRef(null);
+  const [minTempInput, setMinTempInput] = useState('');
+  const [maxTempInput, setMaxTempInput] = useState('');
 
   const [appliedFilters, setAppliedFilters] = useState({
     minTemp: -3,
@@ -13,6 +16,14 @@ export default function TemperatureTab({ data }) {
   });
 
   const [timeGroup, setTimeGroup] = useState('Hourly'); // Hourly, Monthly, Yearly
+
+  
+  const handleClear = () => {
+    setMinTempInput('');
+    setMaxTempInput('');
+    setAppliedFilters({ minTemp: -3, maxTemp: 5 });
+    setTimeGroup('Hourly');
+  };
 
   const handleRun = () => {
     setAppliedFilters({
@@ -122,11 +133,42 @@ export default function TemperatureTab({ data }) {
             </div>
           </div>
 
-          <button className="btn-primary" style={{ width: '100%', marginTop: '8px' }} onClick={handleRun}>Run / Create Report</button>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <button className="btn-primary" style={{ flex: 1 }} onClick={handleRun}>▶ Run</button>
+            <button className="btn-primary" style={{ flex: 1, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171' }} onClick={handleClear}>✕ Clear</button>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <button 
+              className="btn-primary" 
+              style={{ flex: 1, padding: '6px 12px', fontSize: '13px', background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', border: 'none', color: '#ffffff', boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+              onClick={() => exportGraphAsPNG(chartRef, 'TemperatureTab.png')}
+            >
+              📈 Export Graph
+            </button>
+            <button 
+              className="btn-primary" 
+              style={{ flex: 1, padding: '6px 12px', fontSize: '13px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', color: '#ffffff', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+              onClick={() => {
+                if (!reportInfo) return;
+              generateOpsmetReport({
+                analysis: 'Temperature',
+                airport: reportInfo.airport,
+                begin: reportInfo.begin,
+                end: reportInfo.end,
+                selectedMonths: reportInfo.selectedMonths,
+                data,
+                extraParams: { MIN_TEMP: minTemp, MAX_TEMP: maxTemp },
+                filterFn: (d) => typeof d.temperature === 'number' && d.temperature >= minTemp && d.temperature <= maxTemp,
+              });
+              }}
+            >
+              📊 Export Report
+            </button>
+          </div>
         </div>
         
         {/* Chart Area */}
-        <div className="glass-container md:col-span-3" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
+        <div ref={chartRef} className="glass-container md:col-span-3" style={{ padding: '24px', display: 'flex', flexDirection: 'column' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <div className="tabs-container" style={{ borderBottom: 'none', paddingBottom: 0 }}>

@@ -9,12 +9,12 @@ import CloudTypePctTab from './tabs/CloudTypePctTab';
 import TemperaturePctTab from './tabs/TemperaturePctTab';
 import PressurePctTab from './tabs/PressurePctTab';
 
-export default function PercentageView({ data, activeTab }) {
+export default function PercentageView({ data, activeTab, reportInfo }) {
   return (
     <div>
       <div className="tab-content">
         {activeTab === 'visibility_pct' && (
-          <VisibilityPctTab data={data} />
+          <VisibilityPctTab data={data} reportInfo={reportInfo} />
         )}
 
         {activeTab === 'visibility_stations_pct' && (
@@ -22,31 +22,31 @@ export default function PercentageView({ data, activeTab }) {
         )}
 
         {activeTab === 'phenomena_query_pct' && (
-          <PhenomenaPctTab data={data} />
+          <PhenomenaPctTab data={data} reportInfo={reportInfo} />
         )}
 
         {activeTab === 'ceiling_pct' && (
-          <CeilingPctTab data={data} />
+          <CeilingPctTab data={data} reportInfo={reportInfo} />
         )}
 
         {activeTab === 'head_tail_wind_pct' && (
-          <HeadTailWindPctTab data={data} />
+          <HeadTailWindPctTab data={data} reportInfo={reportInfo} />
         )}
 
         {activeTab === 'vis_head_tail_wind_pct' && (
-          <VisHeadTailPctTab data={data} />
+          <VisHeadTailPctTab data={data} reportInfo={reportInfo} />
         )}
 
         {activeTab === 'cloud_type_pct' && (
-          <CloudTypePctTab data={data} />
+          <CloudTypePctTab data={data} reportInfo={reportInfo} />
         )}
 
         {activeTab === 'temperature_pct' && (
-          <TemperaturePctTab data={data} />
+          <TemperaturePctTab data={data} reportInfo={reportInfo} />
         )}
 
         {activeTab === 'pressure_pct' && (
-          <PressurePctTab data={data} />
+          <PressurePctTab data={data} reportInfo={reportInfo} />
         )}
 
         {/* Future percentage tabs will be added here */}
@@ -59,3 +59,4 @@ export default function PercentageView({ data, activeTab }) {
     </div>
   );
 }
+

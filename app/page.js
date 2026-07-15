@@ -388,6 +388,13 @@ export default function Home() {
 
 
 
+  // Date range state (lifted from ControlPanel for report export)
+  const today = new Date();
+  const past = new Date();
+  past.setDate(today.getDate() - 2);
+  const [startDate, setStartDate] = useState(past.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
+
   // Data state
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -402,7 +409,7 @@ export default function Home() {
   const [percentageTab, setPercentageTab] = useState('visibility_pct');
   const [resetKey, setResetKey] = useState(0);
   const [hoveredPoint, setHoveredPoint] = useState(null);
-  const [stationInput, setStationInput] = useState('LTFM');
+  const [stationInput, setStationInput] = useState('');
   const [isDayTime, setIsDayTime] = useState(false);
   const [sunPos, setSunPos] = useState(() => getSunPosition(new Date()));
 
@@ -644,6 +651,8 @@ export default function Home() {
   }, []);
 
   const fetchData = async (stationInput, start, end) => {
+    setStartDate(start);
+    setEndDate(end);
     setLoading(true);
     setError(null);
     setShowCharts(false);
@@ -773,6 +782,10 @@ export default function Home() {
               loading={loading}
               station={stationInput}
               setStation={setStationInput}
+              startDate={startDate}
+              setStartDate={setStartDate}
+              endDate={endDate}
+              setEndDate={setEndDate}
             />
           </div>
 
@@ -1066,10 +1079,10 @@ export default function Home() {
                 <Charts data={processedData} />
               )}
               {hasData && mainTab === 'observations' && (
-                <ObservationsView data={processedData} activeTab={observationTab} />
+                <ObservationsView data={processedData} activeTab={observationTab} reportInfo={{ airport: activeStation, begin: startDate, end: endDate, selectedMonths }} />
               )}
               {hasData && mainTab === 'percentage' && (
-                <PercentageView data={processedData} activeTab={percentageTab} />
+                <PercentageView data={processedData} activeTab={percentageTab} reportInfo={{ airport: activeStation, begin: startDate, end: endDate, selectedMonths }} />
               )}
             </div>
           </div>
