@@ -11,11 +11,11 @@ const TYPES = ['CB', 'TCU'];
 export default function CloudTypeTab({ data, reportInfo }) {
   const chartRef = useRef(null);
 
-  const [selectedCoverages, setSelectedCoverages] = useState(['BKN', 'OVC']);
-  const [selectedTypes, setSelectedTypes] = useState(['CB']);
+  const [selectedCoverages, setSelectedCoverages] = useState([]);
+  const [selectedTypes, setSelectedTypes] = useState([]);
 
-  const [appliedCoverages, setAppliedCoverages] = useState(['BKN', 'OVC']);
-  const [appliedTypes, setAppliedTypes] = useState(['CB']);
+  const [appliedCoverages, setAppliedCoverages] = useState([]);
+  const [appliedTypes, setAppliedTypes] = useState([]);
 
   const [isCoverageOpen, setIsCoverageOpen] = useState(false);
   const [isTypeOpen, setIsTypeOpen] = useState(false);
@@ -23,10 +23,10 @@ export default function CloudTypeTab({ data, reportInfo }) {
 
   
   const handleClear = () => {
-    setSelectedCoverages(['BKN', 'OVC']);
-    setSelectedTypes(['CB']);
-    setAppliedCoverages(['BKN', 'OVC']);
-    setAppliedTypes(['CB']);
+    setSelectedCoverages([]);
+    setSelectedTypes([]);
+    setAppliedCoverages([]);
+    setAppliedTypes([]);
     setTimeGroup('Hourly');
   };
 
@@ -144,7 +144,7 @@ export default function CloudTypeTab({ data, reportInfo }) {
             >
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {selectedCoverages.length === 0 ? (
-                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>All</span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>e.g. BKN, OVC</span>
                 ) : (
                   selectedCoverages.map(cov => (
                     <span key={cov} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>{cov} ✕</span>
@@ -173,7 +173,7 @@ export default function CloudTypeTab({ data, reportInfo }) {
             >
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {selectedTypes.length === 0 ? (
-                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>All</span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>e.g. CB</span>
                 ) : (
                   selectedTypes.map(typ => (
                     <span key={typ} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>{typ} ✕</span>

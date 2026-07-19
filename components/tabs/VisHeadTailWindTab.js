@@ -183,7 +183,7 @@ export default function VisHeadTailWindTab({ data, reportInfo }) {
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Wind Component</label>
-            <select value={componentInput} onChange={e => setComponentInput(e.target.value)}>
+            <select className={componentInput === 'Head' ? 'select-default' : ''} value={componentInput} onChange={e => setComponentInput(e.target.value)}>
               <option value="Head">Head</option>
               <option value="Tail">Tail</option>
               <option value="Cross">Cross</option>
@@ -192,7 +192,7 @@ export default function VisHeadTailWindTab({ data, reportInfo }) {
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Wind Type</label>
-            <select value={windTypeInput} onChange={e => setWindTypeInput(e.target.value)}>
+            <select className={windTypeInput === 'Wind' ? 'select-default' : ''} value={windTypeInput} onChange={e => setWindTypeInput(e.target.value)}>
               <option value="Wind">Wind</option>
               <option value="Gust">Gust</option>
             </select>

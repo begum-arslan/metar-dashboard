@@ -278,17 +278,71 @@ export default function PrevailingWindTab({ data, reportInfo }) {
                     textStyle: { color: '#64748b', fontSize: 11 },
                     data: SPEED_BINS.map(b => b.label)
                   },
-                  graphic: [{
-                    type: 'text',
-                    right: 5,
-                    top: 24,
-                    style: {
-                      text: 'Wind Speed (knots)',
-                      fill: '#64748b',
-                      fontSize: 12,
-                      fontWeight: 'bold'
+                  graphic: (() => {
+                    // Compute max percentage to determine axis ticks
+                    const maxPct = windRoseData.reduce((mx, d) => {
+                      let sectorSum = 0;
+                      SPEED_BINS.forEach(b => { sectorSum += d[b.label] || 0; });
+                      return Math.max(mx, sectorSum);
+                    }, 0);
+                    // Replicate ECharts splitNumber=4 nice intervals
+                    const rawInterval = maxPct / 4;
+                    const magnitude = Math.pow(10, Math.floor(Math.log10(rawInterval || 1)));
+                    const niceInterval = Math.ceil(rawInterval / magnitude) * magnitude;
+                    const tickValues = [];
+                    for (let i = 1; i <= 4; i++) {
+                      const val = niceInterval * i;
+                      if (val > 0) tickValues.push(val);
                     }
-                  }],
+                    
+                    // Place labels at 315° (NW) angle relative to chart center
+                    // Polar center: ['44%', '54%'], radius: '68%'
+                    const angleDeg = 315;
+                    const angleRad = (angleDeg * Math.PI) / 180;
+                    const centerXPct = 44;
+                    const centerYPct = 54;
+                    // Max tick = farthest ring = 68% of half the chart dimension
+                    const maxRadius = 68; // percentage of half-size
+                    const maxTickVal = tickValues.length > 0 ? tickValues[tickValues.length - 1] : 1;
+                    
+                    const pctLabels = tickValues.map(val => {
+                      const rPct = (val / maxTickVal) * maxRadius * 0.5; // half because center is at 50%
+                      const x = centerXPct + rPct * Math.cos(angleRad);
+                      const y = centerYPct - rPct * Math.sin(angleRad);
+                      return {
+                        type: 'text',
+                        left: `${x}%`,
+                        top: `${y}%`,
+                        z: 100,
+                        style: {
+                          text: `${val}%`,
+                          fill: '#e2e8f0',
+                          fontSize: 11,
+                          fontWeight: 'bold',
+                          backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                          borderRadius: 3,
+                          padding: [2, 4, 2, 4],
+                          align: 'center',
+                          verticalAlign: 'middle'
+                        }
+                      };
+                    });
+                    
+                    return [
+                      {
+                        type: 'text',
+                        right: 5,
+                        top: 24,
+                        style: {
+                          text: 'Wind Speed (knots)',
+                          fill: '#64748b',
+                          fontSize: 12,
+                          fontWeight: 'bold'
+                        }
+                      },
+                      ...pctLabels
+                    ];
+                  })(),
                   polar: {
                     radius: '68%',
                     center: ['44%', '54%']
@@ -317,15 +371,10 @@ export default function PrevailingWindTab({ data, reportInfo }) {
                     axisLine: { show: false },
                     axisTick: { show: false },
                     axisPointer: { show: true, label: { show: false }, lineStyle: { color: 'rgba(255,255,255,0.4)', width: 1 } },
-                    axisLabel: {
-                      color: '#e2e8f0',
-                      fontSize: 11,
-                      fontWeight: 'bold',
-                      formatter: (val) => val === 0 ? '' : `${val}%`
-                    },
+                    axisLabel: { show: false },
                     splitLine: {
                       show: true,
-                      lineStyle: { color: 'rgba(255,255,255,0.12)', type: 'solid' }
+                      lineStyle: { color: 'rgba(255,255,255,0.12)', type: 'dashed' }
                     },
                     splitNumber: 4
                   },

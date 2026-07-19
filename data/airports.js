@@ -269,6 +269,7 @@ const AIRPORTS = [
   { lat: 47.651581, lng: 106.821772, iata: 'UBN', icao: 'ZMCK', name: 'Ulan Batur (Moğolistan)' },
   { lat: 41.5843009949, lng: 60.6417007446, iata: 'UGC', icao: 'UZNU', name: 'Urgenç (Özbekistan)' },
   { lat: 38.4682006836, lng: 43.3322982788, iata: 'VAN', icao: 'LTCI', name: 'Van (Türkiye)' },
+  { lat: 19.0660, lng: 73.0680, iata: 'NMI', icao: 'VANM', name: 'Navi Mumbai (Hindistan)' },
   { lat: 43.2321014404, lng: 27.8250999451, iata: 'VAR', icao: 'LBWN', name: 'Varna (Bulgaristan)' },
   { lat: 39.8138008118, lng: 36.9034996033, iata: 'VAS', icao: 'LTAR', name: 'Sivas (Türkiye)' },
   { lat: 45.5052986145, lng: 12.3519001007, iata: 'VCE', icao: 'LIPZ', name: 'Venedik (İtalya)' },

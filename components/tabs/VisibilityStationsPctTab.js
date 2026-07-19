@@ -2,25 +2,12 @@
 import React, { useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { parseISO } from 'date-fns';
-
-const MONTHS_OPTIONS = [
-  { value: 0, label: 'January' },
-  { value: 1, label: 'February' },
-  { value: 2, label: 'March' },
-  { value: 3, label: 'April' },
-  { value: 4, label: 'May' },
-  { value: 5, label: 'June' },
-  { value: 6, label: 'July' },
-  { value: 7, label: 'August' },
-  { value: 8, label: 'September' },
-  { value: 9, label: 'October' },
-  { value: 10, label: 'November' },
-  { value: 11, label: 'December' }
-];
-
+import { generateStationsTableReport } from '@/utils/excelExport';
+import { exportGraphAsPNG } from '@/utils/exportGraph';
 const COLORS = ['#3b82f6', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
 
 export default function VisibilityStationsPctTab() {
+  const chartRef = React.useRef(null);
   const [stationsInput, setStationsInput] = useState('');
   
   const today = new Date();
@@ -29,8 +16,7 @@ export default function VisibilityStationsPctTab() {
   const [startDate, setStartDate] = useState(past.toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
   
-  const [selectedMonths, setSelectedMonths] = useState([]);
-  const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
+
   
   const [thresholdInput, setThresholdInput] = useState('');
   const [appliedThreshold, setAppliedThreshold] = useState(1000);
@@ -41,11 +27,7 @@ export default function VisibilityStationsPctTab() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const toggleMonth = (val) => {
-    setSelectedMonths(prev => 
-      prev.includes(val) ? prev.filter(m => m !== val) : [...prev, val]
-    );
-  };
+
 
   const handleRun = async () => {
     const val = parseInt(thresholdInput, 10);
@@ -80,7 +62,7 @@ export default function VisibilityStationsPctTab() {
     setStationsInput('LTBA, LTFM, LTCG');
     setStartDate(past.toISOString().split('T')[0]);
     setEndDate(today.toISOString().split('T')[0]);
-    setSelectedMonths([]);
+
     setThresholdInput('1000');
     setAppliedThreshold(1000);
     setData([]);
@@ -95,7 +77,7 @@ export default function VisibilityStationsPctTab() {
         const dateStr = d.valid.includes('T') ? d.valid : `${d.valid.replace(' ', 'T')}Z`;
         const dt = parseISO(dateStr);
         if (isNaN(dt.getTime())) return null;
-        if (selectedMonths.length > 0 && !selectedMonths.includes(dt.getUTCMonth())) return null;
+
         
         const dayStr = dt.toISOString().split('T')[0];
         return { ...d, _dt: dt, _dayStr: dayStr };
@@ -172,7 +154,7 @@ export default function VisibilityStationsPctTab() {
     });
 
     return { chartData, tableData, uniqueStations, timeKeys };
-  }, [data, appliedThreshold, selectedMonths, timeGroup]);
+  }, [data, appliedThreshold, timeGroup]);
 
   return (
     <div style={{ marginTop: '16px' }}>
@@ -204,37 +186,7 @@ export default function VisibilityStationsPctTab() {
             </div>
           </div>
 
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label>Months</label>
-            <div className="month-dropdown-container" style={{ position: 'relative' }}>
-              <button 
-                type="button"
-                className="month-dropdown-toggle bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-white p-2 rounded w-full text-left flex justify-between items-center"
-                onClick={() => setIsMonthDropdownOpen(!isMonthDropdownOpen)}
-              >
-                <span className="truncate">
-                  {selectedMonths.length === 0 ? 'Select Months (All)' : `${selectedMonths.length} month(s) selected`}
-                </span>
-                <span style={{ fontSize: '0.8rem' }}>▼</span>
-              </button>
-              
-              {isMonthDropdownOpen && (
-                <div className="month-dropdown-menu absolute z-50 mt-1 w-full bg-[#1e293b] border border-[rgba(255,255,255,0.1)] rounded shadow-xl max-h-60 overflow-y-auto">
-                  {MONTHS_OPTIONS.map(m => (
-                    <label key={m.value} className="flex items-center p-2 hover:bg-[rgba(255,255,255,0.05)] cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedMonths.includes(m.value)}
-                        onChange={() => toggleMonth(m.value)}
-                        className="mr-3"
-                      />
-                      <span className="text-sm text-white">{m.label}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label htmlFor="visPctThreshold">Visibility (m)</label>
@@ -260,12 +212,35 @@ export default function VisibilityStationsPctTab() {
               ✕ Clear
             </button>
           </div>
+
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <button 
+              className="btn-primary" 
+              style={{ flex: 1, padding: '6px 12px', fontSize: '13px', background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', border: 'none', color: '#ffffff', boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+              onClick={() => exportGraphAsPNG(chartRef, 'VisibilityStationsPctTab.png')}
+            >
+              📈 Export Graph
+            </button>
+            <button 
+              className="btn-primary" 
+              style={{ flex: 1, padding: '6px 12px', fontSize: '13px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', color: '#ffffff', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+              onClick={() => {
+                generateStationsTableReport({
+                  analysis: 'Visibility Stations Pct',
+                  tableData,
+                  timeKeys
+                });
+              }}
+            >
+              📊 Export Report
+            </button>
+          </div>
           
           {error && <div style={{ color: '#ef4444', fontSize: '0.85rem' }}>{error}</div>}
         </div>
         
         {/* Main Content Area */}
-        <div className="md:col-span-3" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div ref={chartRef} className="md:col-span-3" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           <div className="glass-container" style={{ padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>

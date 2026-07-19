@@ -11,8 +11,8 @@ const TYPES = ['CB', 'TCU'];
 export default function CloudTypePctTab({ data, reportInfo }) {
   const chartRef = useRef(null);
 
-  const [selectedCoverages, setSelectedCoverages] = useState(['BKN', 'OVC']);
-  const [selectedTypes, setSelectedTypes] = useState(['CB']);
+  const [selectedCoverages, setSelectedCoverages] = useState([]);
+  const [selectedTypes, setSelectedTypes] = useState([]);
 
   const [appliedCoverages, setAppliedCoverages] = useState(null);
   const [appliedTypes, setAppliedTypes] = useState(null);
@@ -28,8 +28,8 @@ export default function CloudTypePctTab({ data, reportInfo }) {
   };
 
   const handleClear = () => {
-    setSelectedCoverages(['BKN', 'OVC']);
-    setSelectedTypes(['CB']);
+    setSelectedCoverages([]);
+    setSelectedTypes([]);
     setAppliedCoverages(null);
     setAppliedTypes(null);
   };
@@ -148,7 +148,7 @@ export default function CloudTypePctTab({ data, reportInfo }) {
             >
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {selectedCoverages.length === 0 ? (
-                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>All</span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>e.g. BKN, OVC</span>
                 ) : (
                   selectedCoverages.map(cov => (
                     <span key={cov} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>{cov} ✕</span>
@@ -177,7 +177,7 @@ export default function CloudTypePctTab({ data, reportInfo }) {
             >
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {selectedTypes.length === 0 ? (
-                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>All</span>
+                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>e.g. CB</span>
                 ) : (
                   selectedTypes.map(typ => (
                     <span key={typ} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>{typ} ✕</span>

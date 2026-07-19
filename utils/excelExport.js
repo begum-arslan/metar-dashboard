@@ -395,3 +395,43 @@ export function generateOpsmetPctReport(params) {
   const fileName = `${airport}-opsmet-${analysis.toLowerCase().replace(/\s+/g, '-')}-pct-report.xls`;
   XLSX.writeFile(wb, fileName, { bookType: 'xls' });
 }
+
+/**
+ * Generate an Excel report for multiple stations comparison table.
+ *
+ * @param {Object} params
+ * @param {string} params.analysis
+ * @param {Array} params.tableData
+ * @param {Array} params.timeKeys
+ */
+export function generateStationsTableReport(params) {
+  const { analysis, tableData, timeKeys } = params;
+
+  if (!tableData || tableData.length === 0) {
+    alert('No data to export.');
+    return;
+  }
+
+  const rows = [];
+  
+  // Header row
+  const header = ['ICAO', ...timeKeys];
+  rows.push(header);
+
+  // Data rows
+  for (const row of tableData) {
+    const dataRow = [row.station];
+    for (const tk of timeKeys) {
+      dataRow.push(row[tk] > 0 ? row[tk] : 0);
+    }
+    rows.push(dataRow);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  const safeAnalysis = analysis.substring(0, 31);
+  XLSX.utils.book_append_sheet(wb, ws, safeAnalysis);
+
+  const fileName = `stations-${analysis.toLowerCase().replace(/\s+/g, '-')}-report.xls`;
+  XLSX.writeFile(wb, fileName, { bookType: 'xls' });
+}

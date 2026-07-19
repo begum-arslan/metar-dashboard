@@ -167,21 +167,21 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
           
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label htmlFor="intensityPct">Intensity</label>
-            <select id="intensityPct" value={intensity} onChange={e => setIntensity(e.target.value)}>
+            <select id="intensityPct" className={intensity === 'All' ? 'select-default' : ''} value={intensity} onChange={e => setIntensity(e.target.value)}>
               {INTENSITIES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
           </div>
           
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label htmlFor="descriptionPct">Description</label>
-            <select id="descriptionPct" value={description} onChange={e => setDescription(e.target.value)}>
+            <select id="descriptionPct" className={description === 'All' ? 'select-default' : ''} value={description} onChange={e => setDescription(e.target.value)}>
               {DESCRIPTORS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
           </div>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label htmlFor="phenomenaPct">Weather Phenomena</label>
-            <select id="phenomenaPct" value={phenomena} onChange={e => setPhenomena(e.target.value)}>
+            <select id="phenomenaPct" className={phenomena === 'All' ? 'select-default' : ''} value={phenomena} onChange={e => setPhenomena(e.target.value)}>
               {PHENOMENAS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
           </div>
