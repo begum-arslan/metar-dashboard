@@ -151,6 +151,7 @@ const AIRPORTS = [
   { lat: 24.9064998627, lng: 67.1607971191, iata: 'KHI', icao: 'OPKC', name: 'Karaçi (Pakistan)' },
   { lat: 35.4695014954, lng: 44.3488998413, iata: 'KIK', icao: 'ORKK', name: 'Kerkük (Irak)' },
   { lat: 34.4272994995, lng: 135.2440032959, iata: 'KIX', icao: 'RJBB', name: 'Osaka (Japonya)' },
+  { lat: 46.6425018311, lng: 14.3376998901, iata: 'KLU', icao: 'LOWK', name: 'Klagenfurt (Avusturya)' },
   { lat: 50.0777015686, lng: 19.7847995758, iata: 'KRK', icao: 'EPKK', name: 'Krakow (Polonya)' },
   { lat: 40.5621986389, lng: 43.1150016785, iata: 'KSY', icao: 'LTCF', name: 'Kars (Türkiye)' },
   { lat: 27.6965999603, lng: 85.3591003418, iata: 'KTM', icao: 'VNKT', name: 'Kathmandu (Nepal)' },

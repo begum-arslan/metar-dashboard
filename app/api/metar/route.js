@@ -62,7 +62,9 @@ export async function GET(request) {
     for (const row of parsedCsv.data) {
       if (row.metar && typeof row.metar === 'string' && row.metar.trim() !== '') {
         try {
-          const metarData = parse(row.metar);
+          // Strip TEMPO/BECMG/NOSIG trend sections — only parse observed weather
+          const observedMetar = row.metar.replace(/\s+(TEMPO|BECMG|NOSIG)\b.*/i, '');
+          const metarData = parse(observedMetar);
           
           results.push({
             station: row.station,
@@ -76,7 +78,7 @@ export async function GET(request) {
             windGust: metarData.wind?.gust || 0,
             windDirection: metarData.wind?.direction || null,
             altimeter: metarData.altimeter?.inches || null,
-            visibility: metarData.visibility?.meters || null,
+            visibility: metarData.visibility?.meters || (metarData.cavok ? 9999 : null),
             weather: metarData.weather || [],
             clouds: metarData.clouds || [],
             pressureHpa: metarData.altimeter?.millibars || (metarData.altimeter?.inches ? Math.round(metarData.altimeter.inches * 33.8639) : null),
