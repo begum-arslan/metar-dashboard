@@ -11,8 +11,8 @@ export default function PressureTab({ data, reportInfo }) {
   const [maxPressureInput, setMaxPressureInput] = useState('');
 
   const [appliedFilters, setAppliedFilters] = useState({
-    minPressure: 1030,
-    maxPressure: 1048
+    minPressure: 1000,
+    maxPressure: 1010
   });
 
   const [timeGroup, setTimeGroup] = useState('Hourly'); // Hourly, Monthly, Yearly
@@ -119,7 +119,7 @@ export default function PressureTab({ data, reportInfo }) {
                 type="number" 
                 value={minPressureInput} 
                 onChange={e => setMinPressureInput(e.target.value)}
-                placeholder="1030"
+                placeholder="1000"
               />
             </div>
             
@@ -129,7 +129,7 @@ export default function PressureTab({ data, reportInfo }) {
                 type="number" 
                 value={maxPressureInput} 
                 onChange={e => setMaxPressureInput(e.target.value)}
-                placeholder="1048"
+                placeholder="1010"
               />
             </div>
           </div>

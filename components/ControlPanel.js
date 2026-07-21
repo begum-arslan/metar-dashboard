@@ -1,6 +1,8 @@
 "use client";
 import { findAirport } from '@/data/airports';
-
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { parseISO, format } from 'date-fns';
 export default function ControlPanel({ onFetch, loading, station, setStation, startDate, setStartDate, endDate, setEndDate }) {
 
   const handleSubmit = (e) => {
@@ -41,12 +43,30 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
       <div className="form-row">
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label htmlFor="start">Start Date</label>
-          <input type="date" id="start" value={startDate} onChange={e => setStartDate(e.target.value)} min="1998-01-01" required />
+          <DatePicker 
+            id="start"
+            selected={startDate ? parseISO(startDate) : null}
+            onChange={date => setStartDate(date ? format(date, 'yyyy-MM-dd') : '')}
+            dateFormat="yyyy-MM-dd"
+            placeholderText="YYYY-MM-DD"
+            minDate={new Date('1998-01-01')}
+            required
+            className="date-picker-input"
+          />
         </div>
 
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label htmlFor="end">End Date</label>
-          <input type="date" id="end" value={endDate} onChange={e => setEndDate(e.target.value)} min="1998-01-01" required />
+          <DatePicker 
+            id="end"
+            selected={endDate ? parseISO(endDate) : null}
+            onChange={date => setEndDate(date ? format(date, 'yyyy-MM-dd') : '')}
+            dateFormat="yyyy-MM-dd"
+            placeholderText="YYYY-MM-DD"
+            minDate={new Date('1998-01-01')}
+            required
+            className="date-picker-input"
+          />
         </div>
       </div>
 

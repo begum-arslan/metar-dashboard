@@ -287,7 +287,6 @@ const AIRPORTS = [
   { lat: 45.7429008484, lng: 16.0687999725, iata: 'ZAG', icao: 'LDZA', name: 'Zagreb (Hırvatistan)' },
   { lat: -6.2220201492, lng: 39.224899292, iata: 'ZNZ', icao: 'HTZA', name: 'Zanzibar (Tanzanya)' },
   { lat: 47.4646987915, lng: 8.5491695404, iata: 'ZRH', icao: 'LSZH', name: 'Zürih (İsviçre)' },
-  { lat: 43.0613, lng: 74.4776, iata: 'FRU', icao: 'UAFM', name: 'Bişkek (Kırgızistan)' },
   { lat: 37.3647, lng: 42.0582, iata: 'NKT', icao: 'LTCV', name: 'Şırnak (Türkiye)' },
   { lat: 51.8850, lng: 0.2350, iata: 'STN', icao: 'EGSS', name: 'Londra Stansted (İngiltere)' }
 ];

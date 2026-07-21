@@ -15,7 +15,7 @@ export default function Charts({ data }) {
         const date = parseISO(dateStr);
         return {
           ...d,
-          timeLabel: isNaN(date.getTime()) ? d.valid : format(date, 'MMM dd HH:mm'),
+          timeLabel: isNaN(date.getTime()) ? d.valid : format(date, 'yyyy-MM-dd HH:mm'),
           temp: d.temperature !== null ? parseFloat(d.temperature) : null,
           dew: d.dewpoint !== null ? parseFloat(d.dewpoint) : null,
           windSpd: d.windSpeed !== null ? parseFloat(d.windSpeed) : null,
