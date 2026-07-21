@@ -189,8 +189,9 @@ export default function VisibilityStationsPctTab() {
                 value={startDate} 
                 onChange={e => { e.target.setCustomValidity(''); setStartDate(e.target.value); }} 
                 onInvalid={e => e.target.setCustomValidity('Start Date cannot be later than End Date.')}
-                max={endDate} 
+                max={endDate || ''} 
                 required 
+                suppressHydrationWarning
                 onKeyDown={e => { if (e.key === 'Enter') handleRun(); }} 
               />
             </div>
@@ -204,6 +205,7 @@ export default function VisibilityStationsPctTab() {
                 onInvalid={e => e.target.setCustomValidity('End Date cannot be earlier than Start Date.')}
                 min={startDate || "1998-01-01"} 
                 required 
+                suppressHydrationWarning
                 onKeyDown={e => { if (e.key === 'Enter') handleRun(); }} 
               />
             </div>

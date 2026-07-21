@@ -51,8 +51,9 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
             onChange={e => { e.target.setCustomValidity(''); setStartDate(e.target.value); }} 
             onInvalid={e => e.target.setCustomValidity('Start Date cannot be later than End Date.')}
             min="1998-01-01" 
-            max={endDate} 
+            max={endDate || ''} 
             required 
+            suppressHydrationWarning
           />
         </div>
 
@@ -66,6 +67,7 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
             onInvalid={e => e.target.setCustomValidity('End Date cannot be earlier than Start Date.')}
             min={startDate || "1998-01-01"} 
             required 
+            suppressHydrationWarning
           />
         </div>
       </div>
