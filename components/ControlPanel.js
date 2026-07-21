@@ -4,6 +4,10 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (new Date(startDate) > new Date(endDate)) {
+      alert("Start Date cannot be later than End Date.");
+      return;
+    }
     onFetch(station, startDate, endDate);
   };
 
@@ -40,12 +44,29 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
       <div className="form-row">
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label htmlFor="start">Start Date</label>
-          <input type="date" id="start" value={startDate} onChange={e => setStartDate(e.target.value)} min="1998-01-01" required />
+          <input 
+            type="date" 
+            id="start" 
+            value={startDate} 
+            onChange={e => { e.target.setCustomValidity(''); setStartDate(e.target.value); }} 
+            onInvalid={e => e.target.setCustomValidity('Start Date cannot be later than End Date.')}
+            min="1998-01-01" 
+            max={endDate} 
+            required 
+          />
         </div>
 
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label htmlFor="end">End Date</label>
-          <input type="date" id="end" value={endDate} onChange={e => setEndDate(e.target.value)} min="1998-01-01" required />
+          <input 
+            type="date" 
+            id="end" 
+            value={endDate} 
+            onChange={e => { e.target.setCustomValidity(''); setEndDate(e.target.value); }} 
+            onInvalid={e => e.target.setCustomValidity('End Date cannot be earlier than Start Date.')}
+            min={startDate || "1998-01-01"} 
+            required 
+          />
         </div>
       </div>
 

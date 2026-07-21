@@ -30,6 +30,11 @@ export default function VisibilityStationsPctTab() {
 
 
   const handleRun = async () => {
+    if (new Date(startDate) > new Date(endDate)) {
+      alert("Start Date cannot be later than End Date.");
+      return;
+    }
+
     const val = parseInt(thresholdInput, 10);
     if (!isNaN(val)) setAppliedThreshold(val);
     
@@ -178,11 +183,29 @@ export default function VisibilityStationsPctTab() {
           <div className="form-row">
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label htmlFor="startDt">Start Date</label>
-              <input type="date" id="startDt" value={startDate} onChange={e => setStartDate(e.target.value)} required onKeyDown={e => { if (e.key === 'Enter') handleRun(); }} />
+              <input 
+                type="date" 
+                id="startDt" 
+                value={startDate} 
+                onChange={e => { e.target.setCustomValidity(''); setStartDate(e.target.value); }} 
+                onInvalid={e => e.target.setCustomValidity('Start Date cannot be later than End Date.')}
+                max={endDate} 
+                required 
+                onKeyDown={e => { if (e.key === 'Enter') handleRun(); }} 
+              />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label htmlFor="endDt">End Date</label>
-              <input type="date" id="endDt" value={endDate} onChange={e => setEndDate(e.target.value)} required onKeyDown={e => { if (e.key === 'Enter') handleRun(); }} />
+              <input 
+                type="date" 
+                id="endDt" 
+                value={endDate} 
+                onChange={e => { e.target.setCustomValidity(''); setEndDate(e.target.value); }} 
+                onInvalid={e => e.target.setCustomValidity('End Date cannot be earlier than Start Date.')}
+                min={startDate || "1998-01-01"} 
+                required 
+                onKeyDown={e => { if (e.key === 'Enter') handleRun(); }} 
+              />
             </div>
           </div>
 
