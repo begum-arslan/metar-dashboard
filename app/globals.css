@@ -811,3 +811,14 @@ input:focus {
     transform: scale(1.4);
   }
 }
+/* React Datepicker overrides for grid/flex layout */
+.react-datepicker-wrapper,
+.react-datepicker__input-container {
+  display: block;
+  width: 100%;
+}
+
+.date-picker-input {
+  width: 100%;
+  box-sizing: border-box;
+}
