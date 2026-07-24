@@ -884,3 +884,59 @@ input:focus {
 .react-datepicker__navigation:hover *::before {
   border-color: #f8fafc !important;
 }
+
+/* Year & Month Dropdown Styling */
+.react-datepicker__year-dropdown-container--select,
+.react-datepicker__month-dropdown-container--select {
+  margin: 0 4px;
+}
+.react-datepicker__year-dropdown-container--select select,
+.react-datepicker__month-dropdown-container--select select {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  border-radius: 4px !important;
+  padding: 2px 4px !important;
+  font-size: 0.85rem !important;
+  cursor: pointer;
+}
+.react-datepicker__year-dropdown-container--select select:focus,
+.react-datepicker__month-dropdown-container--select select:focus {
+  outline: none;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+.react-datepicker__year-dropdown,
+.react-datepicker__month-dropdown {
+  background-color: #1e293b !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.5) !important;
+}
+.react-datepicker__year-option,
+.react-datepicker__month-option {
+  color: #cbd5e1 !important;
+  padding: 4px 8px !important;
+}
+.react-datepicker__year-option:hover,
+.react-datepicker__month-option:hover {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+  color: #fff !important;
+}
+.react-datepicker__year-option--selected_year,
+.react-datepicker__month-option--selected_month {
+  color: #3b82f6 !important;
+  font-weight: 600 !important;
+}
+.react-datepicker__year-read-view--down-arrow,
+.react-datepicker__month-read-view--down-arrow {
+  border-color: #94a3b8 !important;
+}
+.react-datepicker__year-read-view,
+.react-datepicker__month-read-view {
+  color: #f8fafc !important;
+}
+.react-datepicker__year-read-view:hover .react-datepicker__year-read-view--down-arrow,
+.react-datepicker__month-read-view:hover .react-datepicker__month-read-view--down-arrow {
+  border-color: #f8fafc !important;
+}

@@ -896,7 +896,7 @@ export default function Home() {
                 className={`tab-btn ${mainTab === 'charts' ? 'active' : ''}`}
                 onClick={() => { setMainTab('charts'); if (hasData) setShowCharts(true); }}
               >
-                📊 General Charts
+                🌡️ Climatology
               </button>
             </div>
           </div>
@@ -1076,7 +1076,7 @@ export default function Home() {
           >
             <div className="chart-overlay-content" onClick={(e) => e.stopPropagation()}>
               {hasData && mainTab === 'charts' && (
-                <Charts data={processedData} />
+                <Charts data={processedData} startDate={startDate} endDate={endDate} />
               )}
               {hasData && mainTab === 'observations' && (
                 <ObservationsView data={processedData} activeTab={observationTab} reportInfo={{ airport: activeStation, begin: startDate, end: endDate, selectedMonths }} />

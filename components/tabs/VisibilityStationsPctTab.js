@@ -192,6 +192,10 @@ export default function VisibilityStationsPctTab() {
                 dateFormat="yyyy-MM-dd"
                 className="date-picker-input"
                 maxDate={endDate ? parseISO(endDate) : null}
+                showYearDropdown
+                showMonthDropdown
+                scrollableYearDropdown
+                yearDropdownItemNumber={30}
                 required
                 autoComplete="off"
               />
@@ -205,6 +209,10 @@ export default function VisibilityStationsPctTab() {
                 dateFormat="yyyy-MM-dd"
                 className="date-picker-input"
                 minDate={startDate ? parseISO(startDate) : parseISO('1998-01-01')}
+                showYearDropdown
+                showMonthDropdown
+                scrollableYearDropdown
+                yearDropdownItemNumber={30}
                 required
                 autoComplete="off"
               />

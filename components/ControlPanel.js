@@ -67,6 +67,10 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
             className="date-picker-input"
             minDate={parseISO('1998-01-01')}
             maxDate={endDateObj}
+            showYearDropdown
+            showMonthDropdown
+            scrollableYearDropdown
+            yearDropdownItemNumber={30}
             required
             autoComplete="off"
           />
@@ -81,6 +85,10 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
             dateFormat="yyyy-MM-dd"
             className="date-picker-input"
             minDate={startDateObj || parseISO('1998-01-01')}
+            showYearDropdown
+            showMonthDropdown
+            scrollableYearDropdown
+            yearDropdownItemNumber={30}
             required
             autoComplete="off"
           />
