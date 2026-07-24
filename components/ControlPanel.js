@@ -1,6 +1,21 @@
 "use client";
 import { findAirport } from '@/data/airports';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { parseISO, format } from 'date-fns';
+
 export default function ControlPanel({ onFetch, loading, station, setStation, startDate, setStartDate, endDate, setEndDate }) {
+
+  // Convert string dates (yyyy-MM-dd) to Date objects for react-datepicker
+  const startDateObj = startDate ? parseISO(startDate) : null;
+  const endDateObj = endDate ? parseISO(endDate) : null;
+
+  const handleStartChange = (date) => {
+    if (date) setStartDate(format(date, 'yyyy-MM-dd'));
+  };
+  const handleEndChange = (date) => {
+    if (date) setEndDate(format(date, 'yyyy-MM-dd'));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -44,28 +59,30 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
       <div className="form-row">
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label htmlFor="start">Start Date</label>
-          <input 
-            type="date" 
-            id="start" 
-            value={startDate} 
-            onChange={e => { e.target.setCustomValidity(''); setStartDate(e.target.value); }} 
-            onInvalid={e => e.target.setCustomValidity('Start Date cannot be later than End Date.')}
-            min="1998-01-01" 
-            max={endDate} 
-            required 
+          <DatePicker
+            id="start"
+            selected={startDateObj}
+            onChange={handleStartChange}
+            dateFormat="yyyy-MM-dd"
+            className="date-picker-input"
+            minDate={parseISO('1998-01-01')}
+            maxDate={endDateObj}
+            required
+            autoComplete="off"
           />
         </div>
 
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label htmlFor="end">End Date</label>
-          <input 
-            type="date" 
-            id="end" 
-            value={endDate} 
-            onChange={e => { e.target.setCustomValidity(''); setEndDate(e.target.value); }} 
-            onInvalid={e => e.target.setCustomValidity('End Date cannot be earlier than Start Date.')}
-            min={startDate || "1998-01-01"} 
-            required 
+          <DatePicker
+            id="end"
+            selected={endDateObj}
+            onChange={handleEndChange}
+            dateFormat="yyyy-MM-dd"
+            className="date-picker-input"
+            minDate={startDateObj || parseISO('1998-01-01')}
+            required
+            autoComplete="off"
           />
         </div>
       </div>

@@ -1,7 +1,9 @@
 "use client";
 import React, { useState, useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { parseISO } from 'date-fns';
+import { parseISO, format } from 'date-fns';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { generateStationsTableReport } from '@/utils/excelExport';
 import { exportGraphAsPNG } from '@/utils/exportGraph';
 const COLORS = ['#3b82f6', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
@@ -183,28 +185,28 @@ export default function VisibilityStationsPctTab() {
           <div className="form-row">
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label htmlFor="startDt">Start Date</label>
-              <input 
-                type="date" 
-                id="startDt" 
-                value={startDate} 
-                onChange={e => { e.target.setCustomValidity(''); setStartDate(e.target.value); }} 
-                onInvalid={e => e.target.setCustomValidity('Start Date cannot be later than End Date.')}
-                max={endDate} 
-                required 
-                onKeyDown={e => { if (e.key === 'Enter') handleRun(); }} 
+              <DatePicker
+                id="startDt"
+                selected={startDate ? parseISO(startDate) : null}
+                onChange={(date) => { if (date) setStartDate(format(date, 'yyyy-MM-dd')); }}
+                dateFormat="yyyy-MM-dd"
+                className="date-picker-input"
+                maxDate={endDate ? parseISO(endDate) : null}
+                required
+                autoComplete="off"
               />
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label htmlFor="endDt">End Date</label>
-              <input 
-                type="date" 
-                id="endDt" 
-                value={endDate} 
-                onChange={e => { e.target.setCustomValidity(''); setEndDate(e.target.value); }} 
-                onInvalid={e => e.target.setCustomValidity('End Date cannot be earlier than Start Date.')}
-                min={startDate || "1998-01-01"} 
-                required 
-                onKeyDown={e => { if (e.key === 'Enter') handleRun(); }} 
+              <DatePicker
+                id="endDt"
+                selected={endDate ? parseISO(endDate) : null}
+                onChange={(date) => { if (date) setEndDate(format(date, 'yyyy-MM-dd')); }}
+                dateFormat="yyyy-MM-dd"
+                className="date-picker-input"
+                minDate={startDate ? parseISO(startDate) : parseISO('1998-01-01')}
+                required
+                autoComplete="off"
               />
             </div>
           </div>
