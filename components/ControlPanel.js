@@ -23,17 +23,22 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
       alert("Start Date cannot be later than End Date.");
       return;
     }
-    onFetch(station, startDate, endDate);
+    const stationsArray = station.split(/[,\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+    if (stationsArray.length === 0) return;
+    onFetch(stationsArray, startDate, endDate);
   };
 
   // Resolve input to show the user what will be queried
-  const resolved = station.length >= 3 ? findAirport(station) : null;
-  const isIATA = station.length === 3 && resolved?.airport;
+  const inputStations = station.split(/[,\s]+/).map(s => s.trim().toUpperCase()).filter(s => s.length >= 3);
+  const resolvedList = inputStations.map(s => {
+    const res = findAirport(s);
+    return res && res.airport ? res.airport : { icao: s, name: 'Unknown' };
+  });
 
   return (
     <form onSubmit={handleSubmit} className="compact-form">
       <div className="form-group" style={{ marginBottom: 0 }}>
-        <label htmlFor="station">Airport (ICAO or IATA)</label>
+        <label htmlFor="station">Airports ICAO / IATA</label>
         <input 
           type="text" 
           id="station" 
@@ -43,16 +48,31 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
             setStation(e.target.value.toUpperCase());
           }} 
           onInvalid={e => e.target.setCustomValidity('Please fill out this field.')}
-          placeholder="e.g. LTFM, IST" 
-          maxLength={4}
+          placeholder="e.g. LTFM LTBA EGLL" 
           required 
         />
-        {station.length >= 3 && (
-          <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
-            {resolved && resolved.airport 
-              ? `→ ${resolved.airport.icao} ${resolved.airport.iata ? `/ ${resolved.airport.iata}` : ''} · ${resolved.airport.name}`
-              : `→ ${station.toUpperCase()}`}
-          </span>
+        {resolvedList.length > 0 && (
+          <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            {resolvedList.map((res, i) => (
+              <span key={i}>
+                → {res.icao} {res.iata && res.iata !== res.icao ? `/ ${res.iata}` : ''} · {res.name}
+              </span>
+            ))}
+          </div>
+        )}
+        {inputStations.length > 10 && (
+          <div style={{
+            marginTop: '8px',
+            padding: '10px 12px',
+            borderRadius: '6px',
+            backgroundColor: 'rgba(217, 119, 6, 0.15)', // Amber transparent
+            border: '1px solid rgba(245, 158, 11, 0.4)', // Amber border
+            color: '#fcd34d', // Amber text
+            fontSize: '0.75rem',
+            lineHeight: '1.4'
+          }}>
+            <strong>Performance Warning:</strong> You have entered more than 10 stations. Querying a large number of stations at once, especially over long date ranges, may result in long loading times or server timeouts from the data provider. Consider splitting your query into smaller batches.
+          </div>
         )}
       </div>
 

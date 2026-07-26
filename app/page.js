@@ -396,7 +396,10 @@ export default function Home() {
   const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
 
   // Data state
-  const [data, setData] = useState([]);
+  const [multiData, setMultiData] = useState({});
+  const [stationList, setStationList] = useState([]);
+  const [activeStationTab, setActiveStationTab] = useState(null);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showCharts, setShowCharts] = useState(false);
@@ -476,6 +479,7 @@ export default function Home() {
     return elements;
   }, [activeAirportObj, isDayTime]);
 
+  const data = activeStationTab ? multiData[activeStationTab] || [] : [];
   const hasData = data && data.length > 0;
 
   const activeColor = isDayTime ? '#d5c295' : '#93c5fd';
@@ -650,41 +654,57 @@ export default function Home() {
     }
   }, []);
 
-  const fetchData = async (stationInput, start, end) => {
+  const fetchData = async (stationsArray, start, end) => {
     setStartDate(start);
     setEndDate(end);
     setLoading(true);
     setError(null);
     setShowCharts(false);
 
-    // Resolve IATA → ICAO if needed
-    const { icao } = findAirport(stationInput);
-    const station = icao || stationInput.toUpperCase();
-
     try {
-      const res = await fetch(`/api/metar?station=${station}&start=${start}&end=${end}`);
+      const stationQueries = stationsArray.map(st => {
+        const { icao } = findAirport(st);
+        return icao || st.toUpperCase();
+      });
+      const stationString = stationQueries.join(',');
+      
+      const res = await fetch(`/api/metar?station=${stationString}&start=${start}&end=${end}`);
       if (!res.ok) throw new Error('Failed to fetch data');
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-      setData(json.data);
+      
+      const allData = json.data || [];
+
+      const newMultiData = {};
+      stationsArray.forEach((st, idx) => {
+        const searchCode = stationQueries[idx];
+        newMultiData[st] = allData.filter(d => d.station === searchCode);
+      });
+
+      setMultiData(newMultiData);
+      setStationList(stationsArray);
       setSelectedMonths([]); // Reset months filter on new data load
+      
+      const firstStation = stationsArray[0];
+      setActiveStationTab(firstStation);
+      setActiveStation(firstStation);
 
       // Extract lat/lon from API response for airports not in local DB or missing coords
-      const { airport } = findAirport(stationInput);
+      const firstData = newMultiData[firstStation];
+      const { airport } = findAirport(firstStation);
       let fallbackCoords = null;
-      if ((!airport || airport.lat == null) && json.data.length > 0) {
-        const firstWithCoords = json.data.find(d => d.lat != null && d.lon != null);
+      if ((!airport || airport.lat == null) && firstData && firstData.length > 0) {
+        const firstWithCoords = firstData.find(d => d.lat != null && d.lon != null);
         if (firstWithCoords) {
           fallbackCoords = { lat: firstWithCoords.lat, lng: firstWithCoords.lon };
-          setResolvedCoords({ lat: firstWithCoords.lat, lng: firstWithCoords.lon, code: stationInput.toUpperCase() });
+          setResolvedCoords({ lat: firstWithCoords.lat, lng: firstWithCoords.lon, code: firstStation.toUpperCase() });
         }
       } else {
         setResolvedCoords(null);
       }
 
-      setActiveStation(stationInput.toUpperCase());
-      // Zoom to the airport
-      zoomToAirport(stationInput, fallbackCoords);
+      // Zoom to the first airport
+      zoomToAirport(firstStation, fallbackCoords);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -693,7 +713,9 @@ export default function Home() {
   };
 
   const handleLogoClick = () => {
-    setData([]);
+    setMultiData({});
+    setStationList([]);
+    setActiveStationTab(null);
     setActiveStation(null);
     setResolvedCoords(null);
     setShowCharts(false);
@@ -896,7 +918,7 @@ export default function Home() {
                 className={`tab-btn ${mainTab === 'charts' ? 'active' : ''}`}
                 onClick={() => { setMainTab('charts'); if (hasData) setShowCharts(true); }}
               >
-                🌡️ Climatology
+                📊 General Charts
               </button>
             </div>
           </div>
@@ -1075,6 +1097,37 @@ export default function Home() {
             }}
           >
             <div className="chart-overlay-content" onClick={(e) => e.stopPropagation()}>
+              {hasData && stationList.length > 1 && (
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', overflowX: 'auto' }}>
+                  {stationList.map(st => (
+                    <button
+                      key={st}
+                      className={`tab-btn ${activeStationTab === st ? 'active' : ''}`}
+                      onClick={() => {
+                        setActiveStationTab(st);
+                        setActiveStation(st);
+                        const dataForSt = multiData[st];
+                        const { airport } = findAirport(st);
+                        let fallbackCoords = null;
+                        if ((!airport || airport.lat == null) && dataForSt && dataForSt.length > 0) {
+                          const firstWithCoords = dataForSt.find(d => d.lat != null && d.lon != null);
+                          if (firstWithCoords) {
+                            fallbackCoords = { lat: firstWithCoords.lat, lng: firstWithCoords.lon };
+                            setResolvedCoords({ lat: firstWithCoords.lat, lng: firstWithCoords.lon, code: st });
+                          }
+                        } else {
+                          setResolvedCoords(null);
+                        }
+                        zoomToAirport(st, fallbackCoords);
+                      }}
+                      style={{ padding: '6px 16px', fontSize: '14px', flexShrink: 0 }}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
               {hasData && mainTab === 'charts' && (
                 <Charts data={processedData} startDate={startDate} endDate={endDate} />
               )}

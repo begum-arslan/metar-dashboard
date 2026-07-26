@@ -36,16 +36,6 @@ const tooltipStyle = {
 
 export default function Charts({ data, startDate, endDate }) {
 
-  // ── 5-year validation ──
-  const yearSpan = useMemo(() => {
-    if (!startDate || !endDate) return 0;
-    const s = new Date(startDate);
-    const e = new Date(endDate);
-    return (e - s) / (1000 * 60 * 60 * 24 * 365.25);
-  }, [startDate, endDate]);
-
-  const isInsufficient = yearSpan < 5;
-
   // ── Parse all records once ──
   const records = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -68,6 +58,22 @@ export default function Charts({ data, startDate, endDate }) {
       } catch { return null; }
     }).filter(Boolean);
   }, [data]);
+
+  // ── 5-year validation based on actual data span ──
+  const yearSpan = useMemo(() => {
+    if (!records || records.length < 2) return 0;
+    let minTime = Infinity;
+    let maxTime = -Infinity;
+    for (let r of records) {
+      const t = r._dt.getTime();
+      if (t < minTime) minTime = t;
+      if (t > maxTime) maxTime = t;
+    }
+    if (minTime === Infinity || maxTime === -Infinity) return 0;
+    return (maxTime - minTime) / (1000 * 60 * 60 * 24 * 365.25);
+  }, [records]);
+
+  const isInsufficient = yearSpan < 4.9;
 
   // ── Total unique days per month (denominator for risk %) ──
   const totalDaysPerMonth = useMemo(() => {
@@ -226,6 +232,20 @@ export default function Charts({ data, startDate, endDate }) {
   }, [records, totalDaysPerMonth]);
 
   // ── Render ──
+  if (!records || records.length === 0) {
+    return (
+      <div className="glass-container" style={{ textAlign: 'center', padding: '64px 32px' }}>
+        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📉</div>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 600, marginBottom: '12px', color: '#60a5fa' }}>
+          No Data Available
+        </h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '1rem', maxWidth: '500px', margin: '0 auto', lineHeight: 1.6 }}>
+          There is no data available for the selected parameters. Please verify your query or click "Analyze" to fetch data.
+        </p>
+      </div>
+    );
+  }
+
   if (isInsufficient) {
     return (
       <div className="glass-container" style={{ textAlign: 'center', padding: '64px 32px' }}>
@@ -234,7 +254,7 @@ export default function Charts({ data, startDate, endDate }) {
           Insufficient Date Range
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '1rem', maxWidth: '500px', margin: '0 auto', lineHeight: 1.6 }}>
-          Please select a date range of at least <strong style={{ color: '#fff' }}>5 years</strong> for meaningful climatological analysis.
+          Please select a date range of at least <strong style={{ color: '#fff' }}>5 years</strong> for meaningful analysis.
           The current selection covers approximately <strong style={{ color: '#fbbf24' }}>{yearSpan.toFixed(1)} years</strong>.
         </p>
       </div>
@@ -388,7 +408,26 @@ export default function Charts({ data, startDate, endDate }) {
               <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
               <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} unit="%" />
               <Tooltip contentStyle={tooltipStyle} formatter={(val) => [`${val}%`, undefined]} />
-              <Legend verticalAlign="top" height={36} />
+              <Legend 
+                verticalAlign="top" 
+                height={36} 
+                content={(props) => {
+                  const { payload } = props;
+                  if (!payload) return null;
+                  const order = ['VIS < 5000m', 'VIS < 1000m', 'VIS < 550m'];
+                  const sorted = order.map(val => payload.find(p => p.value === val)).filter(Boolean);
+                  return (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '14px', fontWeight: 500 }}>
+                      {sorted.map((entry, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', color: entry.color }}>
+                          <span style={{ width: 14, height: 14, backgroundColor: entry.color, marginRight: 6, display: 'inline-block' }}></span>
+                          {entry.value}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }}
+              />
               <Bar dataKey="VIS < 5000m" fill="#eab308" name="VIS < 5000m" radius={[2, 2, 0, 0]} />
               <Bar dataKey="VIS < 1000m" fill="#f97316" name="VIS < 1000m" radius={[2, 2, 0, 0]} />
               <Bar dataKey="VIS < 550m"  fill="#ef4444" name="VIS < 550m"  radius={[2, 2, 0, 0]} />
