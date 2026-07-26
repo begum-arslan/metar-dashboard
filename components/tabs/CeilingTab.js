@@ -225,22 +225,23 @@ export default function CeilingTab({ data, reportInfo }) {
               style={{ flex: 1, padding: '6px 12px', fontSize: '13px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', color: '#ffffff', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
               onClick={() => {
                 if (!reportInfo) return;
-              generateOpsmetReport({
-                analysis: 'Ceiling',
-                airport: reportInfo.airport,
-                begin: reportInfo.begin,
-                end: reportInfo.end,
-                selectedMonths: reportInfo.selectedMonths,
-                data,
-                extraParams: { ALTITUDE: appliedThreshold, COVERAGE: targetCovs.join(',') },
-                filterFn: (d) => {
-                  if (!d.clouds || !Array.isArray(d.clouds)) return false;
-                  const layers = d.clouds.filter(c => targetCovs.includes(c.code));
-                  if (layers.length === 0) return false;
-                  const minAlt = Math.min(...layers.map(c => c.altitude));
-                  return minAlt <= appliedThreshold;
-                },
-              });
+                const targetCoverages = appliedCoverages.length > 0 ? appliedCoverages : COVERAGES;
+                generateOpsmetReport({
+                  analysis: 'Ceiling',
+                  airport: reportInfo.airport,
+                  begin: reportInfo.begin,
+                  end: reportInfo.end,
+                  selectedMonths: reportInfo.selectedMonths,
+                  data,
+                  extraParams: { ALTITUDE: appliedThreshold, COVERAGE: targetCoverages.join(',') },
+                  filterFn: (d) => {
+                    if (!d.clouds || !Array.isArray(d.clouds)) return false;
+                    const layers = d.clouds.filter(c => targetCoverages.includes(c.code));
+                    if (layers.length === 0) return false;
+                    const minAlt = Math.min(...layers.map(c => c.altitude));
+                    return minAlt <= appliedThreshold;
+                  },
+                });
               }}
             >
               📊 Export Report

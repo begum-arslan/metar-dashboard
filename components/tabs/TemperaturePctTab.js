@@ -154,16 +154,18 @@ export default function TemperaturePctTab({ data, reportInfo }) {
               className="btn-primary" 
               style={{ flex: 1, padding: '6px 12px', fontSize: '13px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', color: '#ffffff', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
               onClick={() => {
+                if (!reportInfo) return;
+                const { minTemp, maxTemp } = appliedFilters;
                 generateOpsmetPctReport({
-                analysis: 'Temperature',
-                airport: reportInfo.airport,
-                begin: reportInfo.begin,
-                end: reportInfo.end,
-                selectedMonths: reportInfo.selectedMonths,
-                data,
-                extraParams: { MIN_TEMP: minTemp, MAX_TEMP: maxTemp },
-                criteriaFn: (d) => typeof d.temperature === 'number' && d.temperature >= minTemp && d.temperature <= maxTemp,
-              });
+                  analysis: 'Temperature',
+                  airport: reportInfo.airport,
+                  begin: reportInfo.begin,
+                  end: reportInfo.end,
+                  selectedMonths: reportInfo.selectedMonths,
+                  data,
+                  extraParams: { MIN_TEMP: minTemp, MAX_TEMP: maxTemp },
+                  criteriaFn: (d) => typeof d.temperature === 'number' && d.temperature >= minTemp && d.temperature <= maxTemp,
+                });
               }}
             >
               📊 Export Report
@@ -209,6 +211,7 @@ export default function TemperaturePctTab({ data, reportInfo }) {
                   <YAxis 
                     stroke="var(--text-muted)" 
                     tick={{ fill: 'var(--text-muted)' }} 
+                    tickFormatter={(val) => (val * 100).toFixed(0)}
                     label={{ value: 'Ratio(Criteria Rec./Metar Rec.)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }}
                     domain={[0, 'auto']}
                   />

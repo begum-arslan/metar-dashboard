@@ -315,7 +315,8 @@ export default function VisibilityStationsPctTab() {
                     <YAxis 
                       stroke="var(--text-muted)" 
                       tick={{ fill: 'var(--text-muted)' }} 
-                      label={{ value: 'Ratio(Criteria Day/Metar Day)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }}
+                      tickFormatter={(val) => (val * 100).toFixed(0)}
+                      label={{ value: 'Rate (Criteria / Total)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }}
                       domain={[0, 'auto']}
                     />
                     <Tooltip 

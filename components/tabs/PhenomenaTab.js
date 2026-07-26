@@ -202,12 +202,32 @@ export default function PhenomenaTab({ data, reportInfo }) {
                   data,
                   extraParams: { INTENSITY: appliedIntensity, DESCRIPTOR: appliedDesc, PHENOMENA: appliedPhenom },
                   filterFn: (d) => {
-                    if (!d.weather || d.weather.length === 0) return false;
+                    if (!d.weather || d.weather.length === 0) {
+                      if (appliedIntensity === 'All' && appliedDesc === 'All' && appliedPhenom === 'All') return false;
+                      return false;
+                    }
+                    if (appliedPhenom !== 'All') {
+                      const rawTokens = (d.raw || '').split(/\s+/);
+                      let phenomCode = '';
+                      if (appliedPhenom === 'rain') phenomCode = 'RA';
+                      else if (appliedPhenom === 'snow') phenomCode = 'SN';
+                      else if (appliedPhenom === 'rasn') phenomCode = 'RASN';
+                      else if (appliedPhenom === 'snra') phenomCode = 'SNRA';
+                      
+                      if (phenomCode) {
+                        const hasExactPhenom = rawTokens.some(t => {
+                          if (t.startsWith('RE')) return false;
+                          if (phenomCode === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
+                          if (phenomCode === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
+                          return t.includes(phenomCode);
+                        });
+                        if (!hasExactPhenom) return false;
+                      }
+                    }
                     return d.weather.some(w => {
                       const matchInt = appliedIntensity === 'All' || w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity);
                       const matchDesc = appliedDesc === 'All' || w.descriptor === appliedDesc;
-                      const matchPhen = appliedPhenom === 'All' || w.precipitation === appliedPhenom || w.obscuration === appliedPhenom || w.other === appliedPhenom;
-                      return matchInt && matchDesc && matchPhen;
+                      return matchInt && matchDesc;
                     });
                   },
                 });

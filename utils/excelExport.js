@@ -167,7 +167,14 @@ export function generateOpsmetReport(params) {
     return;
   }
 
-  const years = [...new Set(parsed.map(d => d._dt.getUTCFullYear()))].sort((a, b) => a - b);
+  const stations = [...new Set(parsed.map(d => d.station))];
+  const wb = XLSX.utils.book_new();
+
+  for (const st of stations) {
+    const stationParsed = parsed.filter(d => d.station === st);
+    if (stationParsed.length === 0) continue;
+
+const years = [...new Set(stationParsed.map(d => d._dt.getUTCFullYear()))].sort((a, b) => a - b);
 
   // ── 2. Build buckets ──────────────────────────────────────────────
   const buckets = {};
@@ -190,7 +197,7 @@ export function generateOpsmetReport(params) {
     }
   }
 
-  for (const d of parsed) {
+  for (const d of stationParsed) {
     const matches = filterFn(d);
     if (!matches) continue;
     const yr = d._dt.getUTCFullYear();
@@ -226,7 +233,7 @@ export function generateOpsmetReport(params) {
 
   // Row 0: Title
   const titleRow = new Array(COLS).fill('');
-  titleRow[0] = `OPSMET ${analysis} Report — ${airport}`;
+  titleRow[0] = `${airport || 'Multiple Stations'} ${analysis} Report`;
   rows.push(titleRow);
 
   // Row 1: Query Description label
@@ -360,11 +367,12 @@ export function generateOpsmetReport(params) {
   ws['!freeze'] = { xSplit: 1, ySplit: 4 };
 
   // ── 7. Write file ─────────────────────────────────────────────────
-  const wb = XLSX.utils.book_new();
-  const finalSheetName = sheetName || `Opsmet ${analysis} Report`;
-  XLSX.utils.book_append_sheet(wb, ws, finalSheetName.substring(0, 31));
+  
+    XLSX.utils.book_append_sheet(wb, ws, st.substring(0, 31));
+  }
 
-  const fileName = `${airport}-opsmet-${analysis.toLowerCase().replace(/\s+/g, '-')}-report.xlsx`;
+    
+  const fileName = `${airport}-${analysis.toLowerCase().replace(/\s+/g, '-')}-report.xlsx`;
   XLSX.writeFile(wb, fileName, { bookType: 'xlsx' });
 }
 
@@ -408,7 +416,14 @@ export function generateOpsmetPctReport(params) {
     return;
   }
 
-  const years = [...new Set(parsed.map(d => d._dt.getUTCFullYear()))].sort((a, b) => a - b);
+  const stations = [...new Set(parsed.map(d => d.station))];
+  const wb = XLSX.utils.book_new();
+
+  for (const st of stations) {
+    const stationParsed = parsed.filter(d => d.station === st);
+    if (stationParsed.length === 0) continue;
+
+const years = [...new Set(stationParsed.map(d => d._dt.getUTCFullYear()))].sort((a, b) => a - b);
 
   // ── 2. Build buckets ──────────────────────────────────────────────
   const buckets = {};
@@ -431,7 +446,7 @@ export function generateOpsmetPctReport(params) {
     }
   }
 
-  for (const d of parsed) {
+  for (const d of stationParsed) {
     const yr = d._dt.getUTCFullYear();
     const mo = d._dt.getUTCMonth();
     const hr = d._dt.getUTCHours();
@@ -467,7 +482,7 @@ export function generateOpsmetPctReport(params) {
 
   // Row 0: Title
   const titleRow = new Array(COLS).fill('');
-  titleRow[0] = `OPSMET ${analysis} % Report — ${airport}`;
+  titleRow[0] = `${airport || 'Multiple Stations'} ${analysis} % Report`;
   rows.push(titleRow);
 
   // Row 1-2: Query
@@ -593,11 +608,12 @@ export function generateOpsmetPctReport(params) {
   ws['!freeze'] = { xSplit: 1, ySplit: 4 };
 
   // ── 7. Write file ─────────────────────────────────────────────────
-  const wb = XLSX.utils.book_new();
-  const finalSheetName = sheetName || `Opsmet ${analysis} % Report`;
-  XLSX.utils.book_append_sheet(wb, ws, finalSheetName.substring(0, 31));
+  
+    XLSX.utils.book_append_sheet(wb, ws, st.substring(0, 31));
+  }
 
-  const fileName = `${airport}-opsmet-${analysis.toLowerCase().replace(/\s+/g, '-')}-pct-report.xlsx`;
+    
+  const fileName = `${airport}-${analysis.toLowerCase().replace(/\s+/g, '-')}-pct-report.xlsx`;
   XLSX.writeFile(wb, fileName, { bookType: 'xlsx' });
 }
 
