@@ -6,7 +6,6 @@ import { parseISO, format } from 'date-fns';
 
 export default function ControlPanel({ onFetch, loading, station, setStation, startDate, setStartDate, endDate, setEndDate }) {
 
-  // Convert string dates (yyyy-MM-dd) to Date objects for react-datepicker
   const startDateObj = startDate ? parseISO(startDate) : null;
   const endDateObj = endDate ? parseISO(endDate) : null;
 
@@ -38,7 +37,7 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
   return (
     <form onSubmit={handleSubmit} className="compact-form">
       <div className="form-group" style={{ marginBottom: 0 }}>
-        <label htmlFor="station">Airports ICAO / IATA</label>
+        <label htmlFor="station">Airports (ICAO / IATA)</label>
         <input 
           type="text" 
           id="station" 
@@ -89,8 +88,9 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
             maxDate={endDateObj}
             showYearDropdown
             showMonthDropdown
-            scrollableYearDropdown
-            yearDropdownItemNumber={30}
+            dropdownMode="select"
+            calendarStartDay={1}
+            fixedHeight
             required
             autoComplete="off"
           />
@@ -107,8 +107,9 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
             minDate={startDateObj || parseISO('1998-01-01')}
             showYearDropdown
             showMonthDropdown
-            scrollableYearDropdown
-            yearDropdownItemNumber={30}
+            dropdownMode="select"
+            calendarStartDay={1}
+            fixedHeight
             required
             autoComplete="off"
           />
