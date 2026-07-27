@@ -62,10 +62,27 @@ export async function GET(request) {
     for (const row of parsedCsv.data) {
       if (row.metar && typeof row.metar === 'string' && row.metar.trim() !== '') {
         try {
-          // Strip TEMPO/BECMG/NOSIG trend sections — only parse observed weather
-          const observedMetar = row.metar.replace(/\s+(TEMPO|BECMG|NOSIG)\b.*/i, '');
+          // Strip TEMPO/BECMG/NOSIG/PROB30/PROB40 trend sections — only parse observed weather
+          const observedMetar = row.metar.replace(/\s+(TEMPO|BECMG|NOSIG|PROB30|PROB40)\b.*/i, '');
           const metarData = parse(observedMetar);
           
+          let lowestVis = metarData.visibility?.meters !== undefined ? metarData.visibility.meters : null;
+          
+          if (metarData.runwayVisualRange && metarData.runwayVisualRange.length > 0) {
+            const rvrValues = metarData.runwayVisualRange
+              .map(r => r.min)
+              .filter(v => typeof v === 'number' && !isNaN(v));
+              
+            if (rvrValues.length > 0) {
+              const minRvr = Math.min(...rvrValues);
+              if (lowestVis === null) {
+                lowestVis = minRvr;
+              } else {
+                lowestVis = Math.min(lowestVis, minRvr);
+              }
+            }
+          }
+
           results.push({
             station: row.station,
             valid: row.valid, // Timestamp in UTC
@@ -78,7 +95,8 @@ export async function GET(request) {
             windGust: metarData.wind?.gust || 0,
             windDirection: metarData.wind?.direction || null,
             altimeter: metarData.altimeter?.inches || null,
-            visibility: metarData.visibility?.meters || (metarData.cavok ? 9999 : null),
+            cavok: metarData.cavok || false,
+            visibility: lowestVis,
             weather: metarData.weather || [],
             clouds: metarData.clouds || [],
             pressureHpa: metarData.altimeter?.millibars || (metarData.altimeter?.inches ? Math.round(metarData.altimeter.inches * 33.8639) : null),

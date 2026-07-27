@@ -12,8 +12,8 @@ export default function VisHeadTailWindTab({ data, reportInfo }) {
   
   // Wind Filters
   const [runwayInput, setRunwayInput] = useState('');
-  const [componentInput, setComponentInput] = useState('Head'); // Head, Tail, Cross
-  const [windTypeInput, setWindTypeInput] = useState('Wind'); // Wind, Gust
+  const [componentInput, setComponentInput] = useState(''); 
+  const [windTypeInput, setWindTypeInput] = useState(''); 
   const [minSpeedInput, setMinSpeedInput] = useState('');
   const [maxSpeedInput, setMaxSpeedInput] = useState('');
 
@@ -32,8 +32,8 @@ export default function VisHeadTailWindTab({ data, reportInfo }) {
   const handleClear = () => {
     setVisThresholdInput('');
     setRunwayInput('');
-    setComponentInput('Head');
-    setWindTypeInput('Wind');
+    setComponentInput('');
+    setWindTypeInput('');
     setMinSpeedInput('');
     setMaxSpeedInput('');
     setAppliedFilters({
@@ -48,11 +48,19 @@ export default function VisHeadTailWindTab({ data, reportInfo }) {
   };
 
   const handleRun = () => {
+    let visVal = 1000;
+    const vStr = String(visThresholdInput).trim().toUpperCase();
+    if (vStr === 'CAVOK') {
+      visVal = 'CAVOK';
+    } else {
+      visVal = parseInt(visThresholdInput, 10) || 1000;
+    }
+
     setAppliedFilters({
-      visThreshold: parseInt(visThresholdInput, 10) || 1000,
-      runway: parseInt(runwayInput, 10) || 350,
-      component: componentInput,
-      windType: windTypeInput,
+      visThreshold: visVal,
+      runway: parseInt(runwayInput, 10) || 0,
+      component: componentInput || 'Head',
+      windType: windTypeInput || 'Wind',
       minSpeed: parseInt(minSpeedInput, 10) || 0,
       maxSpeed: parseInt(maxSpeedInput, 10) || 999
     });
@@ -66,7 +74,18 @@ export default function VisHeadTailWindTab({ data, reportInfo }) {
     // 1. Filter data based on both Visibility AND Wind calculations
     const filtered = data.filter(d => {
       // Visibility Check
-      if (d.visibility === null || d.visibility > visThreshold) return false;
+      const isCavok = d.cavok === true || (d.visibility !== null && d.visibility >= 10000);
+      let visPass = false;
+      if (visThreshold === 'CAVOK') {
+        visPass = isCavok;
+      } else {
+        if (isCavok) {
+          visPass = visThreshold >= 10000;
+        } else {
+          visPass = d.visibility !== null && d.visibility <= visThreshold;
+        }
+      }
+      if (!visPass) return false;
 
       // Wind Check
       if (typeof d.windDirection !== 'number') return false;
@@ -160,9 +179,10 @@ export default function VisHeadTailWindTab({ data, reportInfo }) {
         <div className="glass-container" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label>Visibility</label>
+            <label htmlFor="vhtwVisThreshold">Visibility (m)</label>
             <input 
-              type="number" 
+              id="vhtwVisThreshold" 
+              type="text" 
               value={visThresholdInput} 
               onChange={e => setVisThresholdInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleRun(); }}
@@ -183,7 +203,8 @@ export default function VisHeadTailWindTab({ data, reportInfo }) {
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Wind Component</label>
-            <select className={componentInput === 'Head' ? 'select-default' : ''} value={componentInput} onChange={e => setComponentInput(e.target.value)}>
+            <select className={!componentInput ? 'select-default' : ''} value={componentInput} onChange={e => setComponentInput(e.target.value)}>
+              <option value="" disabled hidden>Select Component</option>
               <option value="Head">Head</option>
               <option value="Tail">Tail</option>
               <option value="Cross">Cross</option>
@@ -192,7 +213,8 @@ export default function VisHeadTailWindTab({ data, reportInfo }) {
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Wind Type</label>
-            <select className={windTypeInput === 'Wind' ? 'select-default' : ''} value={windTypeInput} onChange={e => setWindTypeInput(e.target.value)}>
+            <select className={!windTypeInput ? 'select-default' : ''} value={windTypeInput} onChange={e => setWindTypeInput(e.target.value)}>
+              <option value="" disabled hidden>Select Type</option>
               <option value="Wind">Wind</option>
               <option value="Gust">Gust</option>
             </select>
@@ -245,7 +267,18 @@ export default function VisHeadTailWindTab({ data, reportInfo }) {
                   data,
                   extraParams: { VISIBILITY: visThreshold, RUNWAY: runway, COMPONENT: component, WIND_TYPE: windType, MIN_SPEED: minSpeed, MAX_SPEED: maxSpeed },
                   filterFn: (d) => {
-                    if (d.visibility === null || d.visibility > visThreshold) return false;
+                    const isCavok = d.cavok === true || (d.visibility !== null && d.visibility >= 10000);
+                    let visPass = false;
+                    if (visThreshold === 'CAVOK') {
+                      visPass = isCavok;
+                    } else {
+                      if (isCavok) {
+                        visPass = visThreshold >= 10000;
+                      } else {
+                        visPass = d.visibility !== null && d.visibility <= visThreshold;
+                      }
+                    }
+                    if (!visPass) return false;
                     if (typeof d.windDirection !== 'number') return false;
                     const speed = windType === 'Gust' ? (d.windGust || 0) : (d.windSpeed || 0);
                     const angleDiffRad = (d.windDirection - runway) * Math.PI / 180;

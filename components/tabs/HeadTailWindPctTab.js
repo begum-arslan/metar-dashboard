@@ -8,8 +8,8 @@ import { exportGraphAsPNG } from '@/utils/exportGraph';
 export default function HeadTailWindPctTab({ data, reportInfo }) {
   const chartRef = useRef(null);
   const [runwayInput, setRunwayInput] = useState('');
-  const [componentInput, setComponentInput] = useState('Tail'); // Head, Tail, Cross
-  const [windTypeInput, setWindTypeInput] = useState('Gust'); // Wind, Gust
+  const [componentInput, setComponentInput] = useState(''); 
+  const [windTypeInput, setWindTypeInput] = useState(''); 
   const [minSpeedInput, setMinSpeedInput] = useState('');
   const [maxSpeedInput, setMaxSpeedInput] = useState('');
   
@@ -19,19 +19,19 @@ export default function HeadTailWindPctTab({ data, reportInfo }) {
   const handleRun = () => {
     setAppliedFilters({
       runway: parseInt(runwayInput, 10) || 0,
-      component: componentInput,
-      windType: windTypeInput,
+      component: componentInput || 'Head',
+      windType: windTypeInput || 'Wind',
       minSpeed: parseInt(minSpeedInput, 10) || 0,
       maxSpeed: parseInt(maxSpeedInput, 10) || 999
     });
   };
 
   const handleClear = () => {
-    setRunwayInput('350');
-    setComponentInput('Tail');
-    setWindTypeInput('Gust');
-    setMinSpeedInput('15');
-    setMaxSpeedInput('25');
+    setRunwayInput('');
+    setComponentInput('');
+    setWindTypeInput('');
+    setMinSpeedInput('');
+    setMaxSpeedInput('');
     setAppliedFilters(null);
   };
 
@@ -152,7 +152,8 @@ export default function HeadTailWindPctTab({ data, reportInfo }) {
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Wind Component</label>
-            <select className={componentInput === 'Head' ? 'select-default' : ''} value={componentInput} onChange={e => setComponentInput(e.target.value)}>
+            <select className={!componentInput ? 'select-default' : ''} value={componentInput} onChange={e => setComponentInput(e.target.value)}>
+              <option value="" disabled hidden>Select Component</option>
               <option value="Head">Head</option>
               <option value="Tail">Tail</option>
               <option value="Cross">Cross</option>
@@ -161,7 +162,8 @@ export default function HeadTailWindPctTab({ data, reportInfo }) {
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Wind Type</label>
-            <select className={windTypeInput === 'Wind' ? 'select-default' : ''} value={windTypeInput} onChange={e => setWindTypeInput(e.target.value)}>
+            <select className={!windTypeInput ? 'select-default' : ''} value={windTypeInput} onChange={e => setWindTypeInput(e.target.value)}>
+              <option value="" disabled hidden>Select Type</option>
               <option value="Wind">Wind</option>
               <option value="Gust">Gust</option>
             </select>

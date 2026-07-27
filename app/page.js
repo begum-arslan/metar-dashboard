@@ -666,14 +666,17 @@ export default function Home() {
         const { icao } = findAirport(st);
         return icao || st.toUpperCase();
       });
-      const stationString = stationQueries.join(',');
-      
-      const res = await fetch(`/api/metar?station=${stationString}&start=${start}&end=${end}`);
-      if (!res.ok) throw new Error('Failed to fetch data');
-      const json = await res.json();
-      if (json.error) throw new Error(json.error);
-      
-      const allData = json.data || [];
+      let allData = [];
+      const chunkSize = 3;
+      for (let i = 0; i < stationQueries.length; i += chunkSize) {
+        const chunk = stationQueries.slice(i, i + chunkSize);
+        const chunkString = chunk.join(',');
+        const res = await fetch(`/api/metar?station=${chunkString}&start=${start}&end=${end}`);
+        if (!res.ok) throw new Error('Failed to fetch data for some stations');
+        const json = await res.json();
+        if (json.error) throw new Error(json.error);
+        allData = allData.concat(json.data || []);
+      }
 
       const newMultiData = {};
       stationsArray.forEach((st, idx) => {

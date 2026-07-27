@@ -9,8 +9,8 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
   const chartRef = useRef(null);
   const [visibilityInput, setVisibilityInput] = useState('');
   const [runwayInput, setRunwayInput] = useState('');
-  const [componentInput, setComponentInput] = useState('Tail'); // Head, Tail, Cross
-  const [windTypeInput, setWindTypeInput] = useState('Wind'); // Wind, Gust
+  const [componentInput, setComponentInput] = useState(''); 
+  const [windTypeInput, setWindTypeInput] = useState(''); 
   const [minSpeedInput, setMinSpeedInput] = useState('');
   const [maxSpeedInput, setMaxSpeedInput] = useState('');
   
@@ -18,23 +18,31 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
   const [timeGroup, setTimeGroup] = useState('Hourly'); // 'Hourly', 'Monthly', 'Yearly'
 
   const handleRun = () => {
+    let visVal = 0;
+    const vStr = String(visibilityInput).trim().toUpperCase();
+    if (vStr === 'CAVOK') {
+      visVal = 'CAVOK';
+    } else {
+      visVal = parseInt(visibilityInput, 10) || 0;
+    }
+
     setAppliedFilters({
-      visibility: parseInt(visibilityInput, 10) || 0,
+      visibility: visVal,
       runway: parseInt(runwayInput, 10) || 0,
-      component: componentInput,
-      windType: windTypeInput,
+      component: componentInput || 'Head',
+      windType: windTypeInput || 'Wind',
       minSpeed: parseFloat(minSpeedInput) || 0,
       maxSpeed: parseFloat(maxSpeedInput) || 999
     });
   };
 
   const handleClear = () => {
-    setVisibilityInput('1000');
-    setRunwayInput('350');
-    setComponentInput('Tail');
-    setWindTypeInput('Wind');
-    setMinSpeedInput('0');
-    setMaxSpeedInput('40');
+    setVisibilityInput('');
+    setRunwayInput('');
+    setComponentInput('');
+    setWindTypeInput('');
+    setMinSpeedInput('');
+    setMaxSpeedInput('');
     setAppliedFilters(null);
   };
 
@@ -85,9 +93,18 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
         if (appliedFilters !== null) {
           const { visibility, runway, component, windType, minSpeed, maxSpeed } = appliedFilters;
           
+          const isCavok = d.cavok === true || (d.visibility !== null && d.visibility >= 10000);
           let matchesVisibility = false;
-          if (d.visibility !== null && d.visibility !== undefined && d.visibility <= visibility) {
-            matchesVisibility = true;
+          if (visibility === 'CAVOK') {
+            if (isCavok) matchesVisibility = true;
+          } else {
+            if (isCavok) {
+              if (visibility >= 10000) matchesVisibility = true;
+            } else {
+              if (d.visibility !== null && d.visibility !== undefined && d.visibility <= visibility) {
+                matchesVisibility = true;
+              }
+            }
           }
 
           if (matchesVisibility && typeof d.windDirection === 'number') {
@@ -151,9 +168,9 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
         <div className="glass-container" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label>Visibility (Metre) ≤ Threshold</label>
+            <label>Visibility (m)</label>
             <input 
-              type="number" 
+              type="text" 
               value={visibilityInput} 
               onChange={e => setVisibilityInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleRun(); }}
@@ -174,7 +191,8 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Wind Component</label>
-            <select className={componentInput === 'Head' ? 'select-default' : ''} value={componentInput} onChange={e => setComponentInput(e.target.value)}>
+            <select className={!componentInput ? 'select-default' : ''} value={componentInput} onChange={e => setComponentInput(e.target.value)}>
+              <option value="" disabled hidden>Select Component</option>
               <option value="Head">Head</option>
               <option value="Tail">Tail</option>
               <option value="Cross">Cross</option>
@@ -183,7 +201,8 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
 
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Wind Type</label>
-            <select className={windTypeInput === 'Wind' ? 'select-default' : ''} value={windTypeInput} onChange={e => setWindTypeInput(e.target.value)}>
+            <select className={!windTypeInput ? 'select-default' : ''} value={windTypeInput} onChange={e => setWindTypeInput(e.target.value)}>
+              <option value="" disabled hidden>Select Type</option>
               <option value="Wind">Wind</option>
               <option value="Gust">Gust</option>
             </select>
@@ -238,7 +257,18 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
                   data,
                   extraParams: { VISIBILITY: visibility, RUNWAY: runway, COMPONENT: component, WIND_TYPE: windType, MIN_SPEED: minSpeed, MAX_SPEED: maxSpeed },
                   criteriaFn: (d) => {
-                    if (d.visibility === null || d.visibility > visibility) return false;
+                    const isCavok = d.cavok === true || (d.visibility !== null && d.visibility >= 10000);
+                    let visPass = false;
+                    if (visibility === 'CAVOK') {
+                      visPass = isCavok;
+                    } else {
+                      if (isCavok) {
+                        visPass = visibility >= 10000;
+                      } else {
+                        visPass = d.visibility !== null && d.visibility <= visibility;
+                      }
+                    }
+                    if (!visPass) return false;
                     if (typeof d.windDirection !== 'number') return false;
                     const speed = windType === 'Gust' ? (d.windGust || 0) : (d.windSpeed || 0);
                     const angleDiffRad = (d.windDirection - runway) * Math.PI / 180;

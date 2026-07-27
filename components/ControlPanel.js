@@ -59,18 +59,18 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
             ))}
           </div>
         )}
-        {inputStations.length > 10 && (
+        {inputStations.length > 15 && (
           <div style={{
             marginTop: '8px',
             padding: '10px 12px',
             borderRadius: '6px',
-            backgroundColor: 'rgba(217, 119, 6, 0.15)', // Amber transparent
-            border: '1px solid rgba(245, 158, 11, 0.4)', // Amber border
-            color: '#fcd34d', // Amber text
+            backgroundColor: 'rgba(56, 189, 248, 0.15)', // Blue transparent
+            border: '1px solid rgba(14, 165, 233, 0.4)', // Blue border
+            color: '#7dd3fc', // Blue text
             fontSize: '0.75rem',
             lineHeight: '1.4'
           }}>
-            <strong>Performance Warning:</strong> You have entered more than 10 stations. Querying a large number of stations at once, especially over long date ranges, may result in long loading times or server timeouts from the data provider. Consider splitting your query into smaller batches.
+            <strong>Large Query Info:</strong> You have selected a large number of stations. Our system will automatically process these in batches to ensure successful data retrieval without timeouts. Please note that downloading years of data for this many airports may take a short while.
           </div>
         )}
       </div>

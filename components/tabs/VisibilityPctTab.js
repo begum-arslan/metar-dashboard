@@ -12,9 +12,14 @@ export default function VisibilityPctTab({ data, reportInfo }) {
   const [timeGroup, setTimeGroup] = useState('Hourly'); // 'Hourly', 'Monthly', 'Yearly'
 
   const handleRun = () => {
-    const val = parseInt(thresholdInput, 10);
-    if (!isNaN(val)) {
-      setAppliedThreshold(val);
+    const valStr = String(thresholdInput).trim().toUpperCase();
+    if (valStr === 'CAVOK') {
+      setAppliedThreshold('CAVOK');
+    } else {
+      const val = parseInt(thresholdInput, 10);
+      if (!isNaN(val)) {
+        setAppliedThreshold(val);
+      }
     }
   };
 
@@ -78,9 +83,18 @@ export default function VisibilityPctTab({ data, reportInfo }) {
         // Every METAR record counts towards total METAR days
         metarBuckets[key].uniqueDays.add(d._dayStr);
 
-        // Criteria: visibility <= threshold
-        if (d.visibility !== null && d.visibility <= appliedThreshold) {
-          criteriaBuckets[key].uniqueDays.add(d._dayStr);
+        // Criteria: visibility <= threshold or CAVOK
+        const isCavok = d.cavok === true || (d.visibility !== null && d.visibility >= 10000);
+        if (appliedThreshold === 'CAVOK') {
+          if (isCavok) criteriaBuckets[key].uniqueDays.add(d._dayStr);
+        } else {
+          if (isCavok) {
+            if (appliedThreshold >= 10000) criteriaBuckets[key].uniqueDays.add(d._dayStr);
+          } else {
+            if (d.visibility !== null && d.visibility <= appliedThreshold) {
+              criteriaBuckets[key].uniqueDays.add(d._dayStr);
+            }
+          }
         }
       }
     });
@@ -117,7 +131,7 @@ export default function VisibilityPctTab({ data, reportInfo }) {
             <label htmlFor="visPctThreshold">Visibility (m)</label>
             <input 
               id="visPctThreshold" 
-              type="number" 
+              type="text" 
               value={thresholdInput} 
               onChange={e => setThresholdInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleRun(); }}
@@ -150,7 +164,12 @@ export default function VisibilityPctTab({ data, reportInfo }) {
                 selectedMonths: reportInfo.selectedMonths,
                 data,
                 extraParams: { VISIBILITY: appliedThreshold },
-                criteriaFn: (d) => d.visibility !== null && d.visibility <= appliedThreshold,
+                criteriaFn: (d) => {
+                  const isCavok = d.cavok === true || (d.visibility !== null && d.visibility >= 10000);
+                  if (appliedThreshold === 'CAVOK') return isCavok;
+                  if (isCavok) return appliedThreshold >= 10000;
+                  return d.visibility !== null && d.visibility <= appliedThreshold;
+                },
               });
               }}
             >

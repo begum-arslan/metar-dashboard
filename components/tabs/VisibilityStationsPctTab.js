@@ -37,8 +37,13 @@ export default function VisibilityStationsPctTab() {
       return;
     }
 
-    const val = parseInt(thresholdInput, 10);
-    if (!isNaN(val)) setAppliedThreshold(val);
+    const vStr = String(thresholdInput).trim().toUpperCase();
+    if (vStr === 'CAVOK') {
+      setAppliedThreshold('CAVOK');
+    } else {
+      const val = parseInt(thresholdInput, 10);
+      if (!isNaN(val)) setAppliedThreshold(val);
+    }
     
     window.dispatchEvent(new CustomEvent('metar-loading', { detail: true }));
 
@@ -47,16 +52,25 @@ export default function VisibilityStationsPctTab() {
     setData([]);
 
     try {
-      const cleanStations = stationsInput.split(',').map(s => s.trim().toUpperCase()).filter(Boolean).join(',');
+      const stationsArr = stationsInput.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+      let allData = [];
       
-      const res = await fetch(`/api/metar?station=${cleanStations}&start=${startDate}&end=${endDate}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch data');
+      const chunkSize = 3;
+      for (let i = 0; i < stationsArr.length; i += chunkSize) {
+        const chunk = stationsArr.slice(i, i + chunkSize);
+        const chunkString = chunk.join(',');
+        
+        const res = await fetch(`/api/metar?station=${chunkString}&start=${startDate}&end=${endDate}`);
+        if (!res.ok) {
+          throw new Error('Failed to fetch data');
+        }
+        const json = await res.json();
+        if (json.error) throw new Error(json.error);
+        
+        allData = allData.concat(json.data || []);
       }
-      const json = await res.json();
-      if (json.error) throw new Error(json.error);
       
-      setData(json.data || []);
+      setData(allData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -123,8 +137,17 @@ export default function VisibilityStationsPctTab() {
         }
         
         buckets[st][key].metar.add(d._dayStr);
-        if (d.visibility !== null && d.visibility <= appliedThreshold) {
-          buckets[st][key].crit.add(d._dayStr);
+        const isCavok = d.cavok === true || (d.visibility !== null && d.visibility >= 10000);
+        if (appliedThreshold === 'CAVOK') {
+          if (isCavok) buckets[st][key].crit.add(d._dayStr);
+        } else {
+          if (isCavok) {
+            if (appliedThreshold >= 10000) buckets[st][key].crit.add(d._dayStr);
+          } else {
+            if (d.visibility !== null && d.visibility <= appliedThreshold) {
+              buckets[st][key].crit.add(d._dayStr);
+            }
+          }
         }
       }
     });
@@ -225,7 +248,7 @@ export default function VisibilityStationsPctTab() {
             <label htmlFor="visPctThreshold">Visibility (m)</label>
             <input 
               id="visPctThreshold" 
-              type="number" 
+              type="text" 
               value={thresholdInput} 
               onChange={e => setThresholdInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleRun(); }}

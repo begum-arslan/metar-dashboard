@@ -8,28 +8,38 @@ import { exportGraphAsPNG } from '@/utils/exportGraph';
 export default function VisibilityTab({ data, reportInfo }) {
   const chartRef = useRef(null);
   const [thresholdInput, setThresholdInput] = useState('');
-  const [appliedThreshold, setAppliedThreshold] = useState(2000);
+  const [appliedThreshold, setAppliedThreshold] = useState(1000);
   const [timeGroup, setTimeGroup] = useState('Hourly'); // 'Hourly', 'Monthly', 'Yearly'
 
   
   const handleClear = () => {
     setThresholdInput('');
-    setAppliedThreshold(2000);
+    setAppliedThreshold(1000);
     setTimeGroup('Hourly');
   };
 
   const handleRun = () => {
-    const val = parseInt(thresholdInput, 10);
-    if (!isNaN(val)) {
-      setAppliedThreshold(val);
+    const valStr = String(thresholdInput).trim().toUpperCase();
+    if (valStr === 'CAVOK') {
+      setAppliedThreshold('CAVOK');
+    } else {
+      const val = parseInt(thresholdInput, 10);
+      if (!isNaN(val)) {
+        setAppliedThreshold(val);
+      }
     }
   };
 
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
     
-    // 1. Filter data based on visibility threshold <= appliedThreshold
-    const filtered = data.filter(d => d.visibility !== null && d.visibility <= appliedThreshold);
+    // 1. Filter data based on visibility threshold <= appliedThreshold or CAVOK
+    const filtered = data.filter(d => {
+      const isCavok = d.cavok === true || (d.visibility !== null && d.visibility >= 10000);
+      if (appliedThreshold === 'CAVOK') return isCavok;
+      if (isCavok) return appliedThreshold >= 10000;
+      return d.visibility !== null && d.visibility <= appliedThreshold;
+    });
     
     // 2. Initialize buckets based on timeGroup
     let buckets = {};
@@ -103,14 +113,14 @@ export default function VisibilityTab({ data, reportInfo }) {
         {/* Sidebar Filters */}
         <div className="glass-container" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
-            <label htmlFor="visThreshold">Visibility (m) ≤ Threshold</label>
+            <label htmlFor="visThreshold">Visibility (m)</label>
             <input 
               id="visThreshold" 
-              type="number" 
+              type="text" 
               value={thresholdInput} 
               onChange={e => setThresholdInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleRun(); }}
-              placeholder="e.g. 2000"
+              placeholder="e.g. 1000"
             />
           </div>
 
@@ -141,7 +151,12 @@ export default function VisibilityTab({ data, reportInfo }) {
                 selectedMonths: reportInfo.selectedMonths,
                 data,
                 extraParams: { VISIBILITY: appliedThreshold },
-                filterFn: (d) => d.visibility !== null && d.visibility <= appliedThreshold,
+                filterFn: (d) => {
+                  const isCavok = d.cavok === true || (d.visibility !== null && d.visibility >= 10000);
+                  if (appliedThreshold === 'CAVOK') return isCavok;
+                  if (isCavok) return appliedThreshold >= 10000;
+                  return d.visibility !== null && d.visibility <= appliedThreshold;
+                },
               });
               }}
             >

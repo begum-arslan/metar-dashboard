@@ -193,11 +193,10 @@ export default function Charts({ data, startDate, endDate }) {
     });
   }, [records]);
 
-  // ── 5. TSRA & Snow Risk ──
+  // ── 5. TSRA Risk ──
   const wxRiskData = useMemo(() => {
     const tsraDays = {};
-    const snowDays = {};
-    for (let m = 0; m < 12; m++) { tsraDays[m] = new Set(); snowDays[m] = new Set(); }
+    for (let m = 0; m < 12; m++) { tsraDays[m] = new Set(); }
 
     records.forEach(r => {
       if (!r.weather || r.weather.length === 0) return;
@@ -214,10 +213,6 @@ export default function Charts({ data, startDate, endDate }) {
         if (w.intensity === 'in the vicinity' && w.descriptor === 'thunderstorm') {
           tsraDays[r._month].add(r._dayStr);
         }
-        // Snow: any snow precipitation (SN, SHSN, +SN, -SN, BLSN, etc.)
-        if (w.precipitation === 'snow') {
-          snowDays[r._month].add(r._dayStr);
-        }
       });
     });
 
@@ -226,7 +221,6 @@ export default function Charts({ data, startDate, endDate }) {
       return {
         label,
         'TSRA Risk': total > 0 ? parseFloat(((tsraDays[m].size / total) * 100).toFixed(2)) : 0,
-        'Snow Risk': total > 0 ? parseFloat(((snowDays[m].size / total) * 100).toFixed(2)) : 0,
       };
     });
   }, [records, totalDaysPerMonth]);
@@ -504,13 +498,13 @@ export default function Charts({ data, startDate, endDate }) {
         </div>
       </div>
 
-      {/* ── TSRA & Snow Risk ── */}
+      {/* ── TSRA Risk ── */}
       <div className="glass-container">
         <h2 style={{ marginBottom: '4px', fontSize: '1.2rem', fontWeight: 600 }}>
-          Thunderstorm (TSRA) &amp; Snow Risk by Month
+          Thunderstorm (TSRA) Risk by Month
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '20px' }}>
-          Percentage of days with thunderstorm (TS/TSRA/VCTS) or snow (SN) phenomena
+          Percentage of days with thunderstorm (TS/TSRA/VCTS) phenomena
         </p>
         <div style={{ height: '340px' }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -521,7 +515,6 @@ export default function Charts({ data, startDate, endDate }) {
               <Tooltip contentStyle={tooltipStyle} formatter={(val) => [`${val}%`, undefined]} />
               <Legend verticalAlign="top" height={36} />
               <Bar dataKey="TSRA Risk" fill="#f59e0b" name="⚡ TSRA Risk" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="Snow Risk" fill="#06b6d4" name="❄️ Snow Risk" radius={[2, 2, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
