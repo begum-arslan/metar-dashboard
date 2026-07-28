@@ -15,28 +15,38 @@ const INTENSITIES = [
 
 const DESCRIPTORS = [
   { value: 'All', label: 'All Descriptions' },
-  { value: 'thunderstorm', label: '(TS) Thunderstorm' },
-  { value: 'shower', label: '(SH) Showers' },
-  { value: 'freezing', label: '(FZ) Freezing' },
+  { value: 'blowing', label: '(BL) Blowing' },
   { value: 'shallow', label: '(MI) Shallow' },
   { value: 'patches', label: '(BC) Patches' },
-  { value: 'partial', label: '(PR) Partial' }
+  { value: 'freezing', label: '(FZ) Freezing' },
+  { value: 'partial', label: '(PR) Partial' },
+  { value: 'shower', label: '(SH) Showers' },
+  { value: 'low drifting', label: '(DR) Drifting' },
+  { value: 'thunderstorm', label: '(TS) Thunderstorm' }
 ];
 
 const PHENOMENAS = [
   { value: 'All', label: 'All Phenomena' },
-  { value: 'rain', label: '(RA) Rain' },
-  { value: 'snow', label: '(SN) Snow' },
-  { value: 'rasn', label: '(RASN) Rain and Snow' },
-  { value: 'snra', label: '(SNRA) Snow and Rain' },
-  { value: 'drizzle', label: '(DZ) Drizzle' },
-  { value: 'fog', label: '(FG) Fog' },
-  { value: 'mist', label: '(BR) Mist' },
-  { value: 'haze', label: '(HZ) Haze' },
-  { value: 'sand', label: '(SA) Sand' },
-  { value: 'dust', label: '(DU) Dust' },
-  { value: 'hail', label: '(GR) Hail' },
-  { value: 'squalls', label: '(SQ) Squalls' }
+  { value: 'FG', label: 'FG' },
+  { value: 'IC', label: 'IC' },
+  { value: 'SS', label: 'SS' },
+  { value: 'SG', label: 'SG' },
+  { value: 'GR', label: 'GR' },
+  { value: 'BR', label: 'BR' },
+  { value: 'DZ', label: 'DZ' },
+  { value: 'SA', label: 'SA' },
+  { value: 'SQ', label: 'SQ' },
+  { value: 'FC', label: 'FC' },
+  { value: 'DU', label: 'DU' },
+  { value: 'PL', label: 'PL' },
+  { value: 'VA', label: 'VA' },
+  { value: 'GS', label: 'GS' },
+  { value: 'HZ', label: 'HZ' },
+  { value: 'PO', label: 'PO' },
+  { value: 'SN', label: 'SN' },
+  { value: 'FU', label: 'FU' },
+  { value: 'DS', label: 'DS' },
+  { value: 'RA', label: 'RA' }
 ];
 
 export default function PhenomenaPctTab({ data, reportInfo }) {
@@ -75,7 +85,39 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
         const dateStr = d.valid.includes('T') ? d.valid : `${d.valid.replace(' ', 'T')}Z`;
         const dt = parseISO(dateStr);
         if (isNaN(dt.getTime())) return null;
-        return { ...d, _dt: dt };
+        
+        // Exact Phenomenon Check via raw tokens
+        let phenomPass = true;
+        if (appliedPhenom !== 'All') {
+          const rawStr = (d.raw || '').replace(/\s+(TEMPO|BECMG|NOSIG|PROB30|PROB40)\b.*/i, '');
+          const cleanStr = d.station ? rawStr.replace(new RegExp('\\b' + d.station + '\\b', 'gi'), '') : rawStr;
+          const rawTokens = cleanStr.split(/\s+/);
+          phenomPass = rawTokens.some(t => {
+            if (t.startsWith('RE')) return false;
+            if (appliedPhenom === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
+            if (appliedPhenom === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
+            return t.includes(appliedPhenom);
+          });
+        }
+        
+        let meetsCriteria = false;
+        if (phenomPass) {
+          if (!d.weather || d.weather.length === 0) {
+            // If metar-parser didn't parse anything, but we already matched the raw phenom (e.g. SS, PL, DS)
+            if (appliedPhenom !== 'All' && appliedIntensity === 'All' && appliedDesc === 'All') {
+              meetsCriteria = true;
+            }
+          } else {
+            meetsCriteria = d.weather.some(w => {
+              const matchInt = appliedIntensity === 'All' || w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity);
+              const matchDesc = appliedDesc === 'All' || w.descriptor === appliedDesc;
+              // If appliedPhenom is set, we already verified it exists in raw tokens.
+              return matchInt && matchDesc;
+            });
+          }
+        }
+        
+        return { ...d, _dt: dt, _meetsCriteria: meetsCriteria };
       } catch (e) {
         return null;
       }

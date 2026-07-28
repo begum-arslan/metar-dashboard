@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { parseISO } from 'date-fns';
 import dynamic from 'next/dynamic';
-import { generateOpsmetReport } from '@/utils/excelExport';
+import { generateOpsmetReport, generateDetailedWindReport } from '@/utils/excelExport';
 import { exportGraphAsPNG } from '@/utils/exportGraph';
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
@@ -39,6 +39,7 @@ export default function PrevailingWindTab({ data, reportInfo }) {
   const [subTab, setSubTab] = useState('ObsMaxAvg'); // 'Wind Rose', 'ObsMaxAvg', 'Hourly Wind'
   const [hoursInput, setHoursInput] = useState(''); 
   const [appliedHours, setAppliedHours] = useState([]);
+  const [includeGusts, setIncludeGusts] = useState(false);
 
   
   const handleClear = () => {
@@ -93,8 +94,11 @@ export default function PrevailingWindTab({ data, reportInfo }) {
     });
 
     filtered.forEach(d => {
-      const spd = d.windSpeed || 0;
-      const deg = d.windDirection;
+      let spd = d.windSpeed || 0;
+      let deg = d.windDirection;
+      if (includeGusts && d.windGust && d.windGust > 0) {
+        spd = d.windGust;
+      }
       
       const hr = parseISO(d.valid.includes('T') ? d.valid : `${d.valid.replace(' ', 'T')}Z`).getUTCHours();
       
@@ -142,7 +146,7 @@ export default function PrevailingWindTab({ data, reportInfo }) {
     });
 
     return { obsMaxAvgData: obsMaxAvgDataResult, hourlyWindData: hourlyWindDataResult, windRoseData: windRoseDataResult, totals: totalsObj };
-  }, [data, appliedHours]);
+  }, [data, appliedHours, includeGusts]);
 
   const toPercent = (decimal) => `${(decimal * 100).toFixed(0)}%`;
 
@@ -165,7 +169,16 @@ export default function PrevailingWindTab({ data, reportInfo }) {
             <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '4px' }}>Leave empty for all hours</small>
           </div>
 
-
+          <div className="form-group" style={{ marginBottom: 0, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
+            <input 
+              type="checkbox" 
+              id="includeGusts" 
+              checked={includeGusts} 
+              onChange={e => setIncludeGusts(e.target.checked)} 
+              style={{ width: '16px', height: '16px', cursor: 'pointer', flexShrink: 0 }}
+            />
+            <label htmlFor="includeGusts" style={{ margin: 0, cursor: 'pointer', fontSize: '0.9rem', whiteSpace: 'nowrap' }}>Include Gusts</label>
+          </div>
 
           <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
             <button className="btn-primary" style={{ flex: 1 }} onClick={handleRun}>▶ Run</button>
@@ -184,15 +197,24 @@ export default function PrevailingWindTab({ data, reportInfo }) {
               style={{ flex: 1, padding: '6px 12px', fontSize: '13px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', color: '#ffffff', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
               onClick={() => {
                 if (!reportInfo) return;
-              generateOpsmetReport({
+              generateDetailedWindReport({
                 analysis: 'Prevailing Wind',
                 airport: reportInfo.airport,
                 begin: reportInfo.begin,
                 end: reportInfo.end,
                 selectedMonths: reportInfo.selectedMonths,
                 data,
-                extraParams: appliedHours.length > 0 ? { HOURS: appliedHours.join(',') } : {},
-                filterFn: (d) => typeof d.windDirection === 'number' || d.windDirection === 'VRB',
+                includeGusts,
+                extraParams: { 
+                  ...(appliedHours.length > 0 ? { HOURS: appliedHours.join(',') } : {}),
+                  INCLUDE_GUSTS: includeGusts ? 'Yes' : 'No'
+                },
+                filterFn: (d) => {
+                  let hasSpeed = false;
+                  if (typeof d.windSpeed === 'number') hasSpeed = true;
+                  else if (d.wind && typeof d.wind.speedKt === 'number') hasSpeed = true;
+                  return hasSpeed;
+                },
               });
               }}
             >

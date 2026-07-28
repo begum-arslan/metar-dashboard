@@ -15,28 +15,38 @@ const INTENSITIES = [
 
 const DESCRIPTORS = [
   { value: 'All', label: 'All Descriptions' },
-  { value: 'thunderstorm', label: '(TS) Thunderstorm' },
-  { value: 'shower', label: '(SH) Showers' },
-  { value: 'freezing', label: '(FZ) Freezing' },
+  { value: 'blowing', label: '(BL) Blowing' },
   { value: 'shallow', label: '(MI) Shallow' },
   { value: 'patches', label: '(BC) Patches' },
-  { value: 'partial', label: '(PR) Partial' }
+  { value: 'freezing', label: '(FZ) Freezing' },
+  { value: 'partial', label: '(PR) Partial' },
+  { value: 'shower', label: '(SH) Showers' },
+  { value: 'low drifting', label: '(DR) Drifting' },
+  { value: 'thunderstorm', label: '(TS) Thunderstorm' }
 ];
 
 const PHENOMENAS = [
   { value: 'All', label: 'All Phenomena' },
-  { value: 'rain', label: '(RA) Rain' },
-  { value: 'snow', label: '(SN) Snow' },
-  { value: 'rasn', label: '(RASN) Rain and Snow' },
-  { value: 'snra', label: '(SNRA) Snow and Rain' },
-  { value: 'drizzle', label: '(DZ) Drizzle' },
-  { value: 'fog', label: '(FG) Fog' },
-  { value: 'mist', label: '(BR) Mist' },
-  { value: 'haze', label: '(HZ) Haze' },
-  { value: 'sand', label: '(SA) Sand' },
-  { value: 'dust', label: '(DU) Dust' },
-  { value: 'hail', label: '(GR) Hail' },
-  { value: 'squalls', label: '(SQ) Squalls' }
+  { value: 'FG', label: 'FG' },
+  { value: 'IC', label: 'IC' },
+  { value: 'SS', label: 'SS' },
+  { value: 'SG', label: 'SG' },
+  { value: 'GR', label: 'GR' },
+  { value: 'BR', label: 'BR' },
+  { value: 'DZ', label: 'DZ' },
+  { value: 'SA', label: 'SA' },
+  { value: 'SQ', label: 'SQ' },
+  { value: 'FC', label: 'FC' },
+  { value: 'DU', label: 'DU' },
+  { value: 'PL', label: 'PL' },
+  { value: 'VA', label: 'VA' },
+  { value: 'GS', label: 'GS' },
+  { value: 'HZ', label: 'HZ' },
+  { value: 'PO', label: 'PO' },
+  { value: 'SN', label: 'SN' },
+  { value: 'FU', label: 'FU' },
+  { value: 'DS', label: 'DS' },
+  { value: 'RA', label: 'RA' }
 ];
 
 export default function PhenomenaTab({ data, reportInfo }) {
@@ -49,7 +59,6 @@ export default function PhenomenaTab({ data, reportInfo }) {
   const [appliedDesc, setAppliedDesc] = useState('All');
   const [appliedPhenom, setAppliedPhenom] = useState('All');
   const [timeGroup, setTimeGroup] = useState('Hourly');
-
 
   const handleClear = () => {
     setIntensity('All');
@@ -71,37 +80,36 @@ export default function PhenomenaTab({ data, reportInfo }) {
     if (!data || data.length === 0) return [];
 
     const filtered = data.filter(d => {
-      if (!d.weather || d.weather.length === 0) {
-        if (appliedIntensity === 'All' && appliedDesc === 'All' && appliedPhenom === 'All') return false;
-        return false;
+      // 1. Exact Phenomenon Check via raw tokens
+      if (appliedPhenom !== 'All') {
+        const rawStr = (d.raw || '').replace(/\s+(TEMPO|BECMG|NOSIG|PROB30|PROB40)\b.*/i, '');
+        const cleanStr = d.station ? rawStr.replace(new RegExp('\\b' + d.station + '\\b', 'gi'), '') : rawStr;
+        const rawTokens = cleanStr.split(/\s+/);
+        const hasExactPhenom = rawTokens.some(t => {
+          if (t.startsWith('RE')) return false;
+          if (appliedPhenom === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
+          if (appliedPhenom === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
+          return t.includes(appliedPhenom);
+        });
+        if (!hasExactPhenom) return false;
       }
 
-      if (appliedPhenom !== 'All') {
-        const rawTokens = (d.raw || '').split(/\s+/);
-        let phenomCode = '';
-        if (appliedPhenom === 'rain') phenomCode = 'RA';
-        else if (appliedPhenom === 'snow') phenomCode = 'SN';
-        else if (appliedPhenom === 'rasn') phenomCode = 'RASN';
-        else if (appliedPhenom === 'snra') phenomCode = 'SNRA';
-        
-        if (phenomCode) {
-          const hasExactPhenom = rawTokens.some(t => {
-            if (t.startsWith('RE')) return false;
-            if (phenomCode === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
-            if (phenomCode === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
-            return t.includes(phenomCode);
-          });
-          if (!hasExactPhenom) return false;
+      // 2. Weather object checks (Intensity and Description)
+      if (!d.weather || d.weather.length === 0) {
+        // If metar-parser didn't parse anything, but we already matched the raw phenom (e.g. SS, PL, DS)
+        if (appliedPhenom !== 'All' && appliedIntensity === 'All' && appliedDesc === 'All') {
+          return true;
         }
+        return false;
       }
 
       return d.weather.some(w => {
         const matchInt = appliedIntensity === 'All' || w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity);
         const matchDesc = appliedDesc === 'All' || w.descriptor === appliedDesc;
-        const matchPhen = appliedPhenom === 'All' || 
-          w.precipitation === appliedPhenom || w.obscuration === appliedPhenom || w.other === appliedPhenom ||
-          ['rain', 'snow', 'rasn', 'snra'].includes(appliedPhenom);
-        return matchInt && matchDesc && matchPhen;
+        // If appliedPhenom is set, we already verified it exists in raw tokens.
+        // We still need to ensure this specific weather object aligns if we want strictness, 
+        // but since metar-parser structures vary, requiring matchInt and matchDesc is enough.
+        return matchInt && matchDesc;
       });
     });
 
@@ -202,28 +210,28 @@ export default function PhenomenaTab({ data, reportInfo }) {
                   data,
                   extraParams: { INTENSITY: appliedIntensity, DESCRIPTOR: appliedDesc, PHENOMENA: appliedPhenom },
                   filterFn: (d) => {
+                    // 1. Exact Phenomenon Check via raw tokens
+                    if (appliedPhenom !== 'All') {
+                      const rawStr = (d.raw || '').replace(/\s+(TEMPO|BECMG|NOSIG|PROB30|PROB40)\b.*/i, '');
+                      const cleanStr = d.station ? rawStr.replace(new RegExp('\\b' + d.station + '\\b', 'gi'), '') : rawStr;
+                      const rawTokens = cleanStr.split(/\s+/);
+                      const hasExactPhenom = rawTokens.some(t => {
+                        if (t.startsWith('RE')) return false;
+                        if (appliedPhenom === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
+                        if (appliedPhenom === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
+                        return t.includes(appliedPhenom);
+                      });
+                      if (!hasExactPhenom) return false;
+                    }
+
+                    // 2. Weather object checks (Intensity and Description)
                     if (!d.weather || d.weather.length === 0) {
-                      if (appliedIntensity === 'All' && appliedDesc === 'All' && appliedPhenom === 'All') return false;
+                      if (appliedPhenom !== 'All' && appliedIntensity === 'All' && appliedDesc === 'All') {
+                        return true;
+                      }
                       return false;
                     }
-                    if (appliedPhenom !== 'All') {
-                      const rawTokens = (d.raw || '').split(/\s+/);
-                      let phenomCode = '';
-                      if (appliedPhenom === 'rain') phenomCode = 'RA';
-                      else if (appliedPhenom === 'snow') phenomCode = 'SN';
-                      else if (appliedPhenom === 'rasn') phenomCode = 'RASN';
-                      else if (appliedPhenom === 'snra') phenomCode = 'SNRA';
-                      
-                      if (phenomCode) {
-                        const hasExactPhenom = rawTokens.some(t => {
-                          if (t.startsWith('RE')) return false;
-                          if (phenomCode === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
-                          if (phenomCode === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
-                          return t.includes(phenomCode);
-                        });
-                        if (!hasExactPhenom) return false;
-                      }
-                    }
+
                     return d.weather.some(w => {
                       const matchInt = appliedIntensity === 'All' || w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity);
                       const matchDesc = appliedDesc === 'All' || w.descriptor === appliedDesc;

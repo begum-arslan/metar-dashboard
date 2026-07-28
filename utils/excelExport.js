@@ -682,3 +682,284 @@ export function generateStationsTableReport(params) {
   const fileName = `stations-${analysis.toLowerCase().replace(/\s+/g, '-')}-report.xlsx`;
   XLSX.writeFile(wb, fileName, { bookType: 'xlsx' });
 }
+
+
+export function generateDetailedWindReport(params) {
+  const {
+    analysis,
+    airport,
+    begin,
+    end,
+    extraParams = {},
+    selectedMonths = [],
+    data,
+    filterFn,
+  } = params;
+
+  const parsed = [];
+  for (const d of data) {
+    try {
+      const dateStr = d.valid.includes('T') ? d.valid : `${d.valid.replace(' ', 'T')}Z`;
+      const dt = parseISO(dateStr);
+      if (isNaN(dt.getTime())) continue;
+      if (selectedMonths.length > 0 && !selectedMonths.includes(dt.getUTCMonth())) continue;
+      if (filterFn && !filterFn(d)) continue;
+      
+      let wspd = null;
+      if (typeof d.windSpeed === 'number') wspd = d.windSpeed;
+      else if (d.wind && typeof d.wind.speedKt === 'number') wspd = d.wind.speedKt;
+      if (wspd === null) continue;
+
+      if (params.includeGusts) {
+        let gust = null;
+        if (typeof d.windGust === 'number') gust = d.windGust;
+        else if (d.wind && typeof d.wind.gust === 'number') gust = d.wind.gust;
+        if (gust !== null && gust > 0) wspd = gust;
+      }
+      
+      parsed.push({ ...d, _dt: dt, _wspd: wspd });
+    } catch {}
+  }
+
+  if (parsed.length === 0) {
+    alert('No data to export.');
+    return;
+  }
+
+  const stations = [...new Set(parsed.map(d => d.station))];
+  const wb = XLSX.utils.book_new();
+
+  for (const st of stations) {
+    const stParsed = parsed.filter(d => d.station === st);
+    if (stParsed.length === 0) continue;
+
+    const years = [...new Set(stParsed.map(d => d._dt.getUTCFullYear()))].sort((a, b) => a - b);
+    
+    const hourlyByYear = {};
+    const yearlyByMonth = {};
+    const totalHourlyByMonth = {};
+    const totalMonthly = {};
+    const totalHourly = {};
+
+    const initBucket = () => ({ obs: 0, sum: 0, max: -Infinity, min: Infinity });
+
+    for (let m = 0; m < 12; m++) {
+      totalMonthly[m] = initBucket();
+      for (let h = 0; h < 24; h++) {
+        if (!totalHourlyByMonth[h]) totalHourlyByMonth[h] = {};
+        totalHourlyByMonth[h][m] = initBucket();
+      }
+    }
+    for (let h = 0; h < 24; h++) {
+      totalHourly[h] = initBucket();
+    }
+
+    for (const y of years) {
+      hourlyByYear[y] = {};
+      yearlyByMonth[y] = {};
+      for (let m = 0; m < 12; m++) yearlyByMonth[y][m] = initBucket();
+      for (let h = 0; h < 24; h++) {
+        hourlyByYear[y][h] = {};
+        for (let m = 0; m < 12; m++) hourlyByYear[y][h][m] = initBucket();
+      }
+    }
+
+    for (const d of stParsed) {
+      const y = d._dt.getUTCFullYear();
+      const m = d._dt.getUTCMonth();
+      const h = d._dt.getUTCHours();
+      const spd = d._wspd;
+
+      const update = (b) => {
+        b.obs++;
+        b.sum += spd;
+        if (spd > b.max) b.max = spd;
+        if (spd < b.min) b.min = spd;
+      };
+
+      update(hourlyByYear[y][h][m]);
+      update(yearlyByMonth[y][m]);
+      update(totalHourlyByMonth[h][m]);
+      update(totalMonthly[m]);
+      update(totalHourly[h]);
+    }
+
+    const formatBucket = (b) => {
+      if (b.obs === 0) return { max: '', avg: '', min: '', obs: 0 };
+      return {
+        max: b.max,
+        avg: parseFloat((b.sum / b.obs).toFixed(1)),
+        min: b.min,
+        obs: b.obs
+      };
+    };
+
+    const COLS = 49; 
+    const rows = [];
+    const merges = [];
+    const cellStyles = [];
+
+    const addRow = (rowArr) => {
+      while(rowArr.length < COLS) rowArr.push('');
+      rows.push(rowArr);
+      return rows.length - 1;
+    };
+
+    // Row 0-2: Query details
+    const titleRow = new Array(COLS).fill('');
+    titleRow[0] = `${st} Opsmet Prevailing Wind Report`;
+    addRow(titleRow);
+    
+    const qdRow = new Array(COLS).fill('');
+    qdRow[0] = 'Query Description';
+    addRow(qdRow);
+
+    const monthsStr = selectedMonths.length > 0 ? `[${selectedMonths.map(m => m + 1).join(',')}]` : '[1,2,3,4,5,6,7,8,9,10,11,12]';
+    const queryObj = { ANALYSIS: analysis, AIRPORT: st, BEGIN: begin, END: end, ...extraParams, MONTHS: monthsStr };
+    const qpRow = new Array(COLS).fill('');
+    qpRow[0] = JSON.stringify(queryObj);
+    addRow(qpRow);
+    addRow(new Array(COLS).fill('')); // Empty row
+
+    // Styles array mapping
+    // cellStyles.push({ r: rowIndex, c: colIndex, style: styleObject });
+
+    const applyStyle = (r, c, style) => {
+      cellStyles.push({ r, c, style });
+    };
+
+    const applyRowStyle = (r, startCol, endCol, style) => {
+      for (let c = startCol; c <= endCol; c++) applyStyle(r, c, style);
+    };
+
+    // Helper to generate the Month + Max/Avg/Min/Obs headers
+    const generateMonthHeaders = (rLabel, titleText) => {
+      const r1 = new Array(COLS).fill('');
+      r1[0] = titleText;
+      for (let m = 0; m < 12; m++) {
+        r1[1 + m * 4] = MONTH_NAMES[m];
+      }
+      const r1Idx = addRow(r1);
+
+      const r2 = new Array(COLS).fill('');
+      r2[0] = rLabel;
+      for (let m = 0; m < 12; m++) {
+        r2[1 + m * 4] = 'Max';
+        r2[1 + m * 4 + 1] = 'Avg';
+        r2[1 + m * 4 + 2] = 'Min';
+        r2[1 + m * 4 + 3] = 'Obs';
+      }
+      const r2Idx = addRow(r2);
+
+      // Merges & Styles
+      applyStyle(r1Idx, 0, styles.yearHeader);
+      applyStyle(r2Idx, 0, styles.hourLabel);
+      for (let m = 0; m < 12; m++) {
+        const startC = 1 + m * 4;
+        merges.push({ s: { r: r1Idx, c: startC }, e: { r: r1Idx, c: startC + 3 } });
+        applyRowStyle(r1Idx, startC, startC + 3, styles.monthHeader);
+        applyRowStyle(r2Idx, startC, startC + 3, styles.subHeader);
+      }
+      return { r1Idx, r2Idx };
+    };
+
+    const addDataRow = (label, dataBuckets, isEven, labelStyle = styles.hourLabel) => {
+      const rowArr = new Array(COLS).fill('');
+      rowArr[0] = label;
+      for (let m = 0; m < 12; m++) {
+        const fb = formatBucket(dataBuckets[m]);
+        const startC = 1 + m * 4;
+        rowArr[startC] = fb.max;
+        rowArr[startC + 1] = fb.avg;
+        rowArr[startC + 2] = fb.min;
+        rowArr[startC + 3] = fb.obs;
+      }
+      const rIdx = addRow(rowArr);
+      const dataStyle = isEven ? styles.dataEven : styles.dataOdd;
+      applyStyle(rIdx, 0, labelStyle);
+      applyRowStyle(rIdx, 1, COLS - 1, dataStyle);
+    };
+
+    // 1. Hourly breakdown per year
+    for (const y of years) {
+      generateMonthHeaders('Hours', `${y}/Months`);
+      for (let h = 0; h < 24; h++) {
+        addDataRow(h, hourlyByYear[y][h], h % 2 === 0);
+      }
+      addRow(new Array(COLS).fill('')); // Spacer
+    }
+
+    // 2. Yearly breakdown (Total across hours for each year)
+    generateMonthHeaders('Years', `${years[0]}-${years[years.length - 1]}/Months`);
+    for (let i = 0; i < years.length; i++) {
+      const y = years[i];
+      addDataRow(y, yearlyByMonth[y], i % 2 === 0);
+    }
+    addDataRow('Total Monthly', totalMonthly, years.length % 2 === 0, styles.totalMonthHeader);
+    addRow(new Array(COLS).fill('')); // Spacer
+
+    // 3. Hourly breakdown across all years
+    generateMonthHeaders('Hours', `${years[0]}-${years[years.length - 1]}/Months`);
+    for (let h = 0; h < 24; h++) {
+      addDataRow(h, totalHourlyByMonth[h], h % 2 === 0);
+    }
+    addRow(new Array(COLS).fill('')); // Spacer
+
+    // 4. Overall Total Hourly (no months, just one block)
+    const tH1 = new Array(COLS).fill('');
+    tH1[0] = 'Total Hourly';
+    const th1Idx = addRow(tH1);
+    
+    const tH2 = new Array(COLS).fill('');
+    tH2[0] = 'Hour';
+    tH2[1] = 'Max'; tH2[2] = 'Avg'; tH2[3] = 'Min'; tH2[4] = 'Obs';
+    const th2Idx = addRow(tH2);
+
+    applyStyle(th1Idx, 0, styles.yearHeader);
+    applyStyle(th2Idx, 0, styles.hourLabel);
+    applyRowStyle(th2Idx, 1, 4, styles.subHeader);
+    merges.push({ s: { r: th1Idx, c: 0 }, e: { r: th1Idx, c: 4 } });
+
+    for (let h = 0; h < 24; h++) {
+      const rArr = new Array(COLS).fill('');
+      rArr[0] = h;
+      const fb = formatBucket(totalHourly[h]);
+      rArr[1] = fb.max; rArr[2] = fb.avg; rArr[3] = fb.min; rArr[4] = fb.obs;
+      const rIdx = addRow(rArr);
+      const ds = h % 2 === 0 ? styles.dataEven : styles.dataOdd;
+      applyStyle(rIdx, 0, styles.hourLabel);
+      applyRowStyle(rIdx, 1, 4, ds);
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Apply basic styles for title rows
+    applyStyle(0, 0, styles.title);
+    merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: COLS - 1 } });
+    applyStyle(1, 0, styles.queryLabel);
+    merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: COLS - 1 } });
+    applyStyle(2, 0, styles.queryValue);
+    merges.push({ s: { r: 2, c: 0 }, e: { r: 2, c: COLS - 1 } });
+
+    // Ensure cell function
+    const ensureCell = (worksheet, r, c, styleObj) => {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      if (!worksheet[addr]) worksheet[addr] = { t: 's', v: '' };
+      worksheet[addr].s = styleObj;
+    };
+
+    for (const css of cellStyles) {
+      ensureCell(ws, css.r, css.c, css.style);
+    }
+    
+    ws['!merges'] = merges;
+    const colWidths = [{ wch: 10 }];
+    for (let i = 1; i < COLS; i++) colWidths.push({ wch: 6 });
+    ws['!cols'] = colWidths;
+    
+    XLSX.utils.book_append_sheet(wb, ws, st);
+  }
+
+  const fileName = `stations-prevailing-wind-report.xlsx`;
+  XLSX.writeFile(wb, fileName, { bookType: 'xlsx' });
+}

@@ -64,7 +64,9 @@ export async function GET(request) {
         try {
           // Strip TEMPO/BECMG/NOSIG/PROB30/PROB40 trend sections — only parse observed weather
           const observedMetar = row.metar.replace(/\s+(TEMPO|BECMG|NOSIG|PROB30|PROB40)\b.*/i, '');
-          const metarData = parse(observedMetar);
+          // Fix metar-parser bug: remove station code so it doesn't get misparsed as a weather code (e.g. DRRN parsed as DR - drifting)
+          const sanitizedMetar = row.station ? observedMetar.replace(new RegExp('\\b' + row.station + '\\b', 'gi'), '') : observedMetar;
+          const metarData = parse(sanitizedMetar);
           
           let lowestVis = metarData.visibility?.meters !== undefined ? metarData.visibility.meters : null;
           
