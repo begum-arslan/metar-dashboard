@@ -36,7 +36,7 @@ const AIRPORTS = [
   { lat: 39.7750015259, lng: 64.4832992554, iata: 'BHK', icao: 'UZSB', name: 'Buhara (Özbekistan)' },
   { lat: 52.4538993835, lng: -1.7480299473, iata: 'BHX', icao: 'EGBB', name: 'Birmingham (İngiltere)' },
   { lat: 43.3011016846, lng: -2.9106099606, iata: 'BIO', icao: 'LEBB', name: 'Bilbao (İspanya)' },
-  { lat: 13.3380002975, lng: -16.6522006989, iata: 'BJL', icao: 'GBYD', name: 'Banjul (Gambiya)' },
+
   { lat: 37.2505989075, lng: 27.6643009186, iata: 'BJV', icao: 'LTFE', name: 'Bodrum (Türkiye)' },
   { lat: 13.6810998917, lng: 100.7470016479, iata: 'BKK', icao: 'VTBS', name: 'Bangkok (Tayland)' },
   { lat: 12.5334997177, lng: -7.9499402046, iata: 'BKO', icao: 'GABS', name: 'Bamako (Mali)' },
@@ -60,7 +60,7 @@ const AIRPORTS = [
   { lat: 10.3074998856, lng: 123.9789962769, iata: 'CEB', icao: 'RPVM', name: 'Cebu (Filipinler)' },
   { lat: -6.1255698204, lng: 106.65599823, iata: 'CGK', icao: 'WIII', name: 'Cakarta (Endonezya)' },
   { lat: 50.8658981323, lng: 7.1427397728, iata: 'CGN', icao: 'EDDK', name: 'Köln (Almanya)' },
-  { lat: 9.57689, lng: -13.612, iata: 'CKY', icao: 'GUCY', name: 'Konakri (Gine)' },
+
   { lat: 46.7851982117, lng: 23.6861991882, iata: 'CLJ', icao: 'LRCL', name: 'Cluj (Romanya)' },
   { lat: 7.1807599068, lng: 79.8841018677, iata: 'CMB', icao: 'VCBI', name: 'Colombo (Sri Lanka)' },
   { lat: 33.3675003052, lng: -7.5899701118, iata: 'CMN', icao: 'GMMN', name: 'Kazablanka (Fas)' },
@@ -125,7 +125,7 @@ const AIRPORTS = [
   { lat: 22.3089008331, lng: 113.915000916, iata: 'HKG', icao: 'VHHH', name: 'Hong Kong (Çin)' },
   { lat: 8.1132001877, lng: 98.3169021606, iata: 'HKT', icao: 'VTSP', name: 'Phuket (Tayland)' },
   { lat: 35.5522994995, lng: 139.7799987793, iata: 'HND', icao: 'RJTT', name: 'Tokyo (Japonya)' },
-  { lat: -17.9318008423, lng: 31.0928001404, iata: 'HRE', icao: 'FVHA', name: 'Harare (Zimbabve)' },
+
   { lat: 27.1783008575, lng: 33.7994003296, iata: 'HRG', icao: 'HEGN', name: 'Hurghada (Mısır)' },
   { lat: 43.2769012451, lng: 68.1903991699, iata: 'HSA', icao: 'UAIT', name: 'Türkistan (Kazakistan)' },
   { lat: 36.36277771, lng: 36.2822227478, iata: 'HTY', icao: 'LTDA', name: 'Hatay (Türkiye)' },
@@ -160,7 +160,7 @@ const AIRPORTS = [
   { lat: 37.9790000916, lng: 32.5619010925, iata: 'KYA', icao: 'LTAN', name: 'Konya (Türkiye)' },
   { lat: 55.6062011719, lng: 49.2787017822, iata: 'KZN', icao: 'UWKD', name: 'Kazan (Rusya)' },
   { lat: 39.1090247, lng: 30.1371297052, iata: 'KZR', icao: 'LTBZ', name: 'Kütahya (Türkiye)' },
-  { lat: -8.8583698273, lng: 13.2312002182, iata: 'LAD', icao: 'FNLU', name: 'Luanda (Angola)' },
+
   { lat: 33.94250107, lng: -118.4079971, iata: 'LAX', icao: 'KLAX', name: 'Los Angeles (ABD)' },
   { lat: 0.4586000144, lng: 9.4122800827, iata: 'LBV', icao: 'FOOL', name: 'Libreville (Gabon)' },
   { lat: 59.8003005981, lng: 30.2625007629, iata: 'LED', icao: 'ULLI', name: 'St. Petersburg (Rusya)' },
@@ -189,7 +189,7 @@ const AIRPORTS = [
   { lat: 4.1918301582, lng: 73.5290985107, iata: 'MLE', icao: 'VRMM', name: 'Male (Maldivler)' },
   { lat: 38.4352989197, lng: 38.0909996033, iata: 'MLX', icao: 'LTAT', name: 'Malatya (Türkiye)' },
   { lat: 14.508600235, lng: 121.019996643, iata: 'MNL', icao: 'RPLL', name: 'Manila (Filipinler)' },
-  { lat: -25.9207992554, lng: 32.5726013184, iata: 'MPM', icao: 'FQMA', name: 'Maputo (Mozambik)' },
+
   { lat: 37.2233009338, lng: 40.6316986084, iata: 'MQM', icao: 'LTCR', name: 'Mardin (Türkiye)' },
   { lat: 43.439271922, lng: 5.2214241028, iata: 'MRS', icao: 'LFML', name: 'Marseille (Fransa)' },
   { lat: -20.4302005768, lng: 57.6836013794, iata: 'MRU', icao: 'FIMP', name: 'Mauritus (Mauritius)' },
@@ -279,7 +279,7 @@ const AIRPORTS = [
   { lat: 39.4892997742, lng: -0.4816249907, iata: 'VLC', icao: 'LEVC', name: 'Valensia (İspanya)' },
   { lat: 54.6341018677, lng: 25.2858009338, iata: 'VNO', icao: 'EYVI', name: 'Vilnius (Litvanya)' },
   { lat: 52.1656990051, lng: 20.9671001434, iata: 'WAW', icao: 'EPWA', name: 'Varşova (Polonya)' },
-  { lat: -22.4799003601, lng: 17.4708995819, iata: 'WDH', icao: 'FYWH', name: 'Windhoek (Namibiya)' },
+
   { lat: 37.551667, lng: 44.233611, iata: 'YKO', icao: 'LTCW', name: 'Hakkari (Türkiye)' },
   { lat: 45.4706001282, lng: -73.7407989502, iata: 'YUL', icao: 'CYUL', name: 'Montreal (Kanada)' },
   { lat: 49.193901062, lng: -123.1839981079, iata: 'YVR', icao: 'CYVR', name: 'Vancouver (Kanada)' },

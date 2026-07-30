@@ -135,7 +135,7 @@ const OBSERVATION_TABS = [
   { id: 'prevailing_wind', label: 'Prevailing Wind' },
   { id: 'ceiling', label: 'Ceiling' },
   { id: 'head_tail_wind', label: 'Head-Tail Wind' },
-  { id: 'vis_head_tail_wind', label: 'Vis. + Head-Tail Wind' },
+  { id: 'vis_head_tail_wind', label: 'Visibility + Head-Tail Wind' },
   { id: 'cloud_type', label: 'Cloud Type' },
   { id: 'temperature', label: 'Temperature' },
   { id: 'temp_without_value', label: 'Temp. Without Value' },
@@ -366,6 +366,9 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [globeReady, setGlobeReady] = useState(false);
   const [globeSize, setGlobeSize] = useState({ width: 0, height: 0 });
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState(null);
 
   // Filter state for Months
   const [selectedMonths, setSelectedMonths] = useState([]);
@@ -970,6 +973,65 @@ export default function Home() {
 
         {/* RIGHT PANEL — Chart Overlay */}
         <div className="right-panel" ref={rightPanelRef}>
+          {/* Top Right Navigation (Hamburger Menu) */}
+          {(!showCharts || !hasData) && (
+            <div style={{
+              position: 'absolute',
+              top: '24px',
+              right: '32px',
+              zIndex: 100,
+              pointerEvents: 'auto'
+            }}>
+              {/* Hamburger Button */}
+              <button 
+                className="floating-pill-btn" 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                style={{ width: '48px', height: '48px', padding: 0, justifyContent: 'center' }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <span style={{ width: '20px', height: '2px', background: '#fff', transition: '0.3s', transform: isMenuOpen ? 'rotate(45deg) translate(5px, 5px)' : 'none' }} />
+                  <span style={{ width: '20px', height: '2px', background: '#fff', transition: '0.3s', opacity: isMenuOpen ? 0 : 1 }} />
+                  <span style={{ width: '20px', height: '2px', background: '#fff', transition: '0.3s', transform: isMenuOpen ? 'rotate(-45deg) translate(5px, -5px)' : 'none' }} />
+                </div>
+              </button>
+
+              {/* Dropdown Menu */}
+              {isMenuOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '56px',
+                  right: 0,
+                  background: 'rgba(20, 20, 20, 0.7)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '12px',
+                  padding: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  minWidth: '160px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                  animation: 'fadeIn 0.2s ease-out'
+                }}>
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => { setActiveModal('guide'); setIsMenuOpen(false); }}
+                  >
+                    <span style={{ fontSize: '1.1rem' }}>📖</span> User Guide
+                  </button>
+                  <button 
+                    className="dropdown-item"
+                    onClick={() => { setActiveModal('contact'); setIsMenuOpen(false); }}
+                  >
+                    <span style={{ fontSize: '1.1rem' }}>✉️</span> Contact
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+
           {/* Loading Screen — only covers the globe area */}
           <div className={['loading-screen', globeReady && 'hidden'].filter(Boolean).join(' ')}>
             <div className="loading-content">
@@ -1144,6 +1206,105 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {activeModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: 'fadeIn 0.2s ease-out'
+        }} onClick={() => setActiveModal(null)}>
+          <div 
+            className="glass-container" 
+            style={{ width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setActiveModal(null)}
+              style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: '#fff', fontSize: '1.5rem', cursor: 'pointer', zIndex: 10 }}
+            >
+              ✕
+            </button>
+            
+            {activeModal === 'guide' && (
+              <div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '16px', color: '#fff' }}>📖 AeroNova User Guide</h2>
+                <div style={{ color: 'var(--text-muted)', lineHeight: '1.6', fontSize: '0.95rem' }}>
+                  
+                  <h3 style={{ color: '#fff', marginTop: '16px', marginBottom: '8px', fontSize: '1.1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>1. What is AeroNova?</h3>
+                  <p style={{ marginBottom: '12px' }}>
+                    <strong>AeroNova</strong> is an advanced operational dashboard system capable of analyzing historical weather (METAR) reports for airports for civil aviation purposes. By retrieving historical METAR data based on the airport (ICAO/IATA), it graphically presents hourly, monthly, and periodic analyses of critical meteorological parameters such as wind, visibility, temperature, pressure, and cloudiness.
+                  </p>
+
+                  <h3 style={{ color: '#fff', marginTop: '16px', marginBottom: '8px', fontSize: '1.1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>2. How to Make a Query?</h3>
+                  <ul style={{ listStyle: 'disc', paddingLeft: '20px', marginBottom: '12px' }}>
+                    <li><strong>Station:</strong> Enter the ICAO or IATA code of the airport you want to analyze in the search box on the left panel (e.g., LTFM, IST).</li>
+                    <li><strong>Date Range:</strong> Select the Start and End dates.</li>
+                    <li><strong>Months:</strong> Optionally, you can filter specific months (e.g., only winter months).</li>
+                    <li><strong>Run:</strong> After completing your selections, click the Run button to start the analysis.</li>
+                  </ul>
+
+                  <h3 style={{ color: '#fff', marginTop: '16px', marginBottom: '8px', fontSize: '1.1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>3. Observations Tab</h3>
+                  <p style={{ marginBottom: '8px' }}>This tab examines raw and processed observation data within the selected date range by parameter:</p>
+                  <ul style={{ listStyle: 'disc', paddingLeft: '20px', marginBottom: '12px' }}>
+                    <li><strong>Prevailing Wind:</strong> Shows the wind direction, speed, and distribution based on the blowing direction via the Wind Rose diagram. Gusts can be included in the analyses.</li>
+                    <li><strong>Visibility:</strong> Analyzes the change in visibility distance over time.</li>
+                    <li><strong>Temperature:</strong> Shows the trend of maximum, minimum, and average temperature values.</li>
+                    <li><strong>Pressure:</strong> Examines the movement of QNH (Pressure) values in the selected period.</li>
+                  </ul>
+
+                  <h3 style={{ color: '#fff', marginTop: '16px', marginBottom: '8px', fontSize: '1.1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>4. Percentage (%) Tab</h3>
+                  <p style={{ marginBottom: '8px' }}>This tab statistically calculates the percentage of the selected criteria (temperature, visibility, phenomena, etc.) occurring in proportion to the total number of observations:</p>
+                  <ul style={{ listStyle: 'disc', paddingLeft: '20px', marginBottom: '12px' }}>
+                    <li><strong>% Phenomena:</strong> Provides the frequency and percentage of specific weather phenomena such as rain, snow, fog, and thunderstorms (TS).</li>
+                    <li><strong>% Cloud Type & Ceiling:</strong> Presents the statistics of hazardous cloud types like CB and TCU, and cloud ceiling coverage ratios below a specific altitude (feet).</li>
+                    <li><strong>% Head-Tail Wind:</strong> Analyzes the percentage of headwind, tailwind, and crosswind components based on the selected runway and wind limits.</li>
+                    <li><strong>% Vis + Head-Tail Wind:</strong> Shows the percentage ratio of occurrences where wind components (head, cross, tail) within a specific speed range are observed simultaneously below a certain visibility level.</li>
+                  </ul>
+
+                  <h3 style={{ color: '#fff', marginTop: '16px', marginBottom: '8px', fontSize: '1.1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>5. Exporting Excel Reports</h3>
+                  <p style={{ marginBottom: '12px' }}>
+                    By clicking the <strong>Export Report</strong> button in the top right corner of any graph or table you are viewing, you can download all detailed data (as hourly and monthly cross-tables) for your current query in Excel format. These reports contain detailed breakdowns formulated for operational planning and archiving.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {activeModal === 'contact' && (
+              <div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '16px', color: '#fff' }}>✉️ Contact Us</h2>
+                <div style={{ color: 'var(--text-muted)', lineHeight: '1.6', fontSize: '0.95rem' }}>
+                  <p style={{ marginBottom: '16px' }}>
+                    For your feedback, suggestions, and questions, you can contact us at the following email addresses:
+                  </p>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>📧</span>
+                      <a href="mailto:METAR@THY.COM" style={{ color: '#749bed', textDecoration: 'none', fontWeight: 500, letterSpacing: '0.5px' }}>METAR@THY.COM</a>
+                    </div>
+                    
+                    <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }} />
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '1.2rem' }}>📧</span>
+                      <a href="mailto:BEGUMA@THY.COM" style={{ color: '#749bed', textDecoration: 'none', fontWeight: 500, letterSpacing: '0.5px' }}>BEGUMA@THY.COM</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
