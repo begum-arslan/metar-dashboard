@@ -684,7 +684,13 @@ export default function Home() {
       const newMultiData = {};
       stationsArray.forEach((st, idx) => {
         const searchCode = stationQueries[idx];
-        newMultiData[st] = allData.filter(d => d.station === searchCode);
+        newMultiData[st] = allData.filter(d => {
+          if (!d.station) return true;
+          const ds = d.station.toUpperCase();
+          const sc = searchCode.toUpperCase();
+          const rawSt = st.toUpperCase();
+          return ds === sc || ds === rawSt || (sc.startsWith('K') && ds === sc.slice(1)) || (rawSt.startsWith('K') && ds === rawSt.slice(1)) || (ds.startsWith('K') && ds.slice(1) === rawSt);
+        });
       });
 
       setMultiData(newMultiData);
@@ -1232,7 +1238,7 @@ export default function Home() {
         }} onClick={() => setActiveModal(null)}>
           <div 
             className="glass-container" 
-            style={{ width: '90%', maxWidth: '600px', maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}
+            style={{ width: '90%', maxWidth: '800px', maxHeight: '85vh', overflowY: 'auto', position: 'relative', padding: '24px' }}
             onClick={e => e.stopPropagation()}
           >
             <button 
@@ -1244,44 +1250,173 @@ export default function Home() {
             
             {activeModal === 'guide' && (
               <div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '16px', color: '#fff' }}>📖 AeroNova User Guide</h2>
-                <div style={{ color: 'var(--text-muted)', lineHeight: '1.6', fontSize: '0.95rem' }}>
+                <h2 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '20px', color: '#7dd3fc', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '2px solid rgba(125, 211, 252, 0.3)', paddingBottom: '10px' }}>
+                  📖 AeroNova User Guide & Operational Manual
+                </h2>
+                
+                <div style={{ color: '#e2e8f0', lineHeight: '1.7', fontSize: '0.92rem', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   
-                  <h3 style={{ color: '#fff', marginTop: '16px', marginBottom: '8px', fontSize: '1.1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>1. What is AeroNova?</h3>
-                  <p style={{ marginBottom: '12px' }}>
-                    <strong>AeroNova</strong> is an advanced operational dashboard system capable of analyzing historical weather (METAR) reports for airports for civil aviation purposes. By retrieving historical METAR data based on the airport (ICAO/IATA), it graphically presents hourly, monthly, and periodic analyses of critical meteorological parameters such as wind, visibility, temperature, pressure, and cloudiness.
-                  </p>
+                  {/* Section 1 */}
+                  <section style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <h3 style={{ color: '#93c5fd', marginBottom: '8px', fontSize: '1.15rem', fontWeight: 600 }}>
+                      1. What is AeroNova & What Does It Do?
+                    </h3>
+                    <p style={{ marginBottom: '8px' }}>
+                      <strong>AeroNova</strong> is a comprehensive operational decision support system designed for aviation meteorology that processes, visualizes, and converts historical <strong>METAR (Meteorological Aerodrome Report)</strong> data into statistical analyses.
+                    </p>
+                    <p>
+                      Critical parameters directly affecting flight safety—such as wind limits, visibility constraints, hazardous weather phenomena, and cloud ceiling—are presented via hourly, monthly, and yearly periodic charts and Excel reports.
+                    </p>
+                  </section>
 
-                  <h3 style={{ color: '#fff', marginTop: '16px', marginBottom: '8px', fontSize: '1.1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>2. How to Make a Query?</h3>
-                  <ul style={{ listStyle: 'disc', paddingLeft: '20px', marginBottom: '12px' }}>
-                    <li><strong>Station:</strong> Enter the ICAO or IATA code of the airport you want to analyze in the search box on the left panel (e.g., LTFM, IST).</li>
-                    <li><strong>Date Range:</strong> Select the Start and End dates.</li>
-                    <li><strong>Months:</strong> Optionally, you can filter specific months (e.g., only winter months).</li>
-                    <li><strong>Run:</strong> After completing your selections, click the Run button to start the analysis.</li>
-                  </ul>
+                  {/* Section 2 */}
+                  <section style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <h3 style={{ color: '#93c5fd', marginBottom: '8px', fontSize: '1.15rem', fontWeight: 600 }}>
+                      2. Basic Query & Filtering Logic
+                    </h3>
+                    <p style={{ marginBottom: '10px' }}>
+                      Use the control panel on the left to set your analysis parameters:
+                    </p>
+                    <ul style={{ listStyle: 'disc', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <li>
+                        <strong>Station (Airport Code):</strong> Enter the 4-letter <strong>ICAO</strong> code (e.g., <code>LTFM</code>, <code>LTAI</code>) or 3-letter <strong>IATA</strong> code (e.g., <code>IST</code>, <code>AYT</code>) of the airport you want to analyze.
+                      </li>
+                      <li>
+                        <strong>Date Range (Start / End Date):</strong> Select the start and end dates from the calendar. Dropdown menus (<code>dropdownMode="select"</code>) are available for quick year and month navigation.
+                      </li>
+                      <li>
+                        <strong>Months (Month Filter):</strong> Filter specific months of the year (e.g. Winter months: December, January, February). You can clear any selected month by clicking the <strong>✕ badge icon</strong>.
+                      </li>
+                      <li>
+                        <strong>Mode Selection (Observations vs. Percentage %):</strong> 
+                        <ul style={{ paddingLeft: '20px', marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <li>• <strong>Observations:</strong> Examines actual recorded values (temperature, wind speed, visibility) via trend graphs.</li>
+                          <li>• <strong>Percentage (%):</strong> Calculates the percentage and probability of selected critical limits (e.g. Visibility &lt; 1000m or Wind &gt; 15kt) occurring out of the total METAR count.</li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </section>
 
-                  <h3 style={{ color: '#fff', marginTop: '16px', marginBottom: '8px', fontSize: '1.1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>3. Observations Tab</h3>
-                  <p style={{ marginBottom: '8px' }}>This tab examines raw and processed observation data within the selected date range by parameter:</p>
-                  <ul style={{ listStyle: 'disc', paddingLeft: '20px', marginBottom: '12px' }}>
-                    <li><strong>Prevailing Wind:</strong> Shows the wind direction, speed, and distribution based on the blowing direction via the Wind Rose diagram. Gusts can be included in the analyses.</li>
-                    <li><strong>Visibility:</strong> Analyzes the change in visibility distance over time.</li>
-                    <li><strong>Temperature:</strong> Shows the trend of maximum, minimum, and average temperature values.</li>
-                    <li><strong>Pressure:</strong> Examines the movement of QNH (Pressure) values in the selected period.</li>
-                  </ul>
+                  {/* Section 3 */}
+                  <section style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <h3 style={{ color: '#93c5fd', marginBottom: '8px', fontSize: '1.15rem', fontWeight: 600 }}>
+                      3. Observations Tab Logic
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div>
+                        <strong style={{ color: '#f3f4f6' }}>• General Charts:</strong> Provides a high-level overview of thunderstorm (TSRA), high wind (&gt;50kt), low visibility, and temperature climatology for the airport.
+                      </div>
+                      <div>
+                        <strong style={{ color: '#f3f4f6' }}>• Prevailing Wind (Wind Rose):</strong> Displays wind direction (0-360°) and speed distribution. Checking <em>Include Gusts</em> incorporates gust speeds into the analysis.
+                      </div>
+                      <div>
+                        <strong style={{ color: '#f3f4f6' }}>• Visibility & Visibility Stations:</strong> Analyzes prevailing visibility trends over time. The <em>Visibility Stations</em> tab allows side-by-side comparison of multiple airports.
+                      </div>
+                      <div>
+                        <strong style={{ color: '#f3f4f6' }}>• Temperature & Temp Without Value:</strong> 
+                        Displays temperature trends. The <strong>Percentile (100%, 90%, 75%, 50%)</strong> filter in the <em>Temp Without Value</em> tab trims extreme outlier temperatures to reveal the airport's typical temperature regime. Chart labels are ordered from left to right as <code>Min</code>, <code>Avg</code>, <code>Max</code>.
+                      </div>
+                      <div>
+                        <strong style={{ color: '#f3f4f6' }}>• Pressure & Pressure Without Value:</strong> Analyzes QNH (station pressure) variations and outlier trimming.
+                      </div>
+                      <div>
+                        <strong style={{ color: '#f3f4f6' }}>• Phenomena (Weather Events & Precise Filtering):</strong> 
+                        Scans weather codes (RA, SN, FG, TS, etc.) in raw METAR text. 
+                        <br />
+                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                          * Precise Filtering Logic: For example, selecting <strong>TS</strong> and <strong>RA</strong> only matches METARs containing <strong>TSRA</strong>. If <strong>VC (Vicinity)</strong> is also selected, only <strong>VCTS</strong> reports are retrieved, excluding pure TSRA. Past weather events (RETSRA) are automatically filtered out.
+                        </span>
+                      </div>
+                      <div>
+                        <strong style={{ color: '#f3f4f6' }}>• Cloud Type & Ceiling:</strong> 
+                        Analyzes hazardous cloud types such as <strong>CB (Cumulonimbus)</strong> and <strong>TCU (Towering Cumulus)</strong>, coverage amounts (<code>FEW</code>, <code>SCT</code>, <code>BKN</code>, <code>OVC</code>), and cloud ceiling constraints below specific altitudes (e.g., 1500ft).
+                      </div>
+                      <div>
+                        <strong style={{ color: '#f3f4f6' }}>• Head-Tail Wind (Wind Components):</strong> 
+                        Calculates <strong>Headwind</strong>, <strong>Tailwind</strong>, and <strong>Crosswind</strong> vector components relative to the selected runway orientation (e.g., 06R/24L).
+                      </div>
+                    </div>
+                  </section>
 
-                  <h3 style={{ color: '#fff', marginTop: '16px', marginBottom: '8px', fontSize: '1.1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>4. Percentage (%) Tab</h3>
-                  <p style={{ marginBottom: '8px' }}>This tab statistically calculates the percentage of the selected criteria (temperature, visibility, phenomena, etc.) occurring in proportion to the total number of observations:</p>
-                  <ul style={{ listStyle: 'disc', paddingLeft: '20px', marginBottom: '12px' }}>
-                    <li><strong>% Phenomena:</strong> Provides the frequency and percentage of specific weather phenomena such as rain, snow, fog, and thunderstorms (TS).</li>
-                    <li><strong>% Cloud Type & Ceiling:</strong> Presents the statistics of hazardous cloud types like CB and TCU, and cloud ceiling coverage ratios below a specific altitude (feet).</li>
-                    <li><strong>% Head-Tail Wind:</strong> Analyzes the percentage of headwind, tailwind, and crosswind components based on the selected runway and wind limits.</li>
-                    <li><strong>% Vis + Head-Tail Wind:</strong> Shows the percentage ratio of occurrences where wind components (head, cross, tail) within a specific speed range are observed simultaneously below a certain visibility level.</li>
-                  </ul>
+                  {/* Section 4 */}
+                  <section style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <h3 style={{ color: '#93c5fd', marginBottom: '12px', fontSize: '1.15rem', fontWeight: 600 }}>
+                      4. Risk & Percentage (%) Calculation Formulas
+                    </h3>
+                    
+                    {/* Percentage Tabs Formulas */}
+                    <div style={{ marginBottom: '16px', background: 'rgba(16, 185, 129, 0.05)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.15)' }}>
+                      <h4 style={{ color: '#6ee7b7', fontSize: '0.98rem', fontWeight: 600, marginBottom: '6px' }}>
+                        📈 A) Percentage (%) Tabs Calculation Formulas (Hourly, Monthly, Yearly):
+                      </h4>
+                      <p style={{ fontSize: '0.88rem', color: '#cbd5e1', marginBottom: '10px' }}>
+                        Calculations in Percentage tabs are performed across 3 dimensions based on the selected Time Group:
+                      </p>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.86rem' }}>
+                        <div>
+                          <strong style={{ color: '#a7f3d0' }}>1. Hourly Percentage (%):</strong>
+                          <code style={{ display: 'block', background: 'rgba(0,0,0,0.4)', padding: '6px 10px', borderRadius: '4px', color: '#6ee7b7', marginTop: '3px' }}>
+                            Hourly Percentage (%) = (Number of METAR/SPECI reports with phenomenon at specific hour (00..23) / Total METAR/SPECI reports published at that hour) × 100
+                          </code>
+                        </div>
 
-                  <h3 style={{ color: '#fff', marginTop: '16px', marginBottom: '8px', fontSize: '1.1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>5. Exporting Excel Reports</h3>
-                  <p style={{ marginBottom: '12px' }}>
-                    By clicking the <strong>Export Report</strong> button in the top right corner of any graph or table you are viewing, you can download all detailed data (as hourly and monthly cross-tables) for your current query in Excel format. These reports contain detailed breakdowns formulated for operational planning and archiving.
-                  </p>
+                        <div>
+                          <strong style={{ color: '#a7f3d0' }}>2. Monthly Percentage (%):</strong>
+                          <code style={{ display: 'block', background: 'rgba(0,0,0,0.4)', padding: '6px 10px', borderRadius: '4px', color: '#6ee7b7', marginTop: '3px' }}>
+                            Monthly Percentage (%) = (Number of days with phenomenon observed in a specific month (Jan..Dec) / Total days with METAR/SPECI published in that month) × 100
+                          </code>
+                        </div>
+
+                        <div>
+                          <strong style={{ color: '#a7f3d0' }}>3. Yearly Percentage (%):</strong>
+                          <code style={{ display: 'block', background: 'rgba(0,0,0,0.4)', padding: '6px 10px', borderRadius: '4px', color: '#6ee7b7', marginTop: '3px' }}>
+                            Yearly Percentage (%) = (Number of days with phenomenon observed in a specific year / Total days with METAR/SPECI published in that year) × 100
+                          </code>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* General Charts Risk Formula */}
+                    <div style={{ background: 'rgba(56, 189, 248, 0.05)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.15)' }}>
+                      <h4 style={{ color: '#7dd3fc', fontSize: '0.98rem', fontWeight: 600, marginBottom: '6px' }}>
+                        📊 B) General Charts Risk Formula (Day-Based Probability):
+                      </h4>
+                      <p style={{ fontSize: '0.88rem', color: '#cbd5e1', marginBottom: '8px' }}>
+                        Used in <em>Visibility Risk</em>, <em>High Wind Risk (&gt;50KT)</em>, and <em>TSRA Risk</em> charts in General Charts. It is based on the number of days in a month where the adverse condition occurred at least once:
+                      </p>
+                      <code style={{ display: 'block', background: 'rgba(0,0,0,0.4)', padding: '10px', borderRadius: '6px', color: '#7dd3fc', fontSize: '0.85rem', textAlign: 'center', fontWeight: 600 }}>
+                        Monthly Risk (%) = (Number of days with at least 1 METAR exceeding threshold in month / Total days with observations in that month) × 100
+                      </code>
+                    </div>
+
+                    <div style={{ marginTop: '14px', fontSize: '0.88rem', color: '#cbd5e1' }}>
+                      <strong style={{ color: '#f3f4f6' }}>Analysis Tabs Summary:</strong>
+                      <ul style={{ listStyle: 'disc', paddingLeft: '20px', marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <li><strong>% Phenomena:</strong> Indicates the percentage of total time weather phenomena (fog, rain, snow, thunderstorm) occur.</li>
+                        <li><strong>% Cloud Type & Ceiling:</strong> Displays the probability of hazardous clouds or low cloud ceilings constraining operations.</li>
+                        <li><strong>% Head-Tail Wind:</strong> Presents the risk percentage of tailwind or crosswind limits being exceeded on a selected runway.</li>
+                        <li><strong>% Vis + Head-Tail Wind:</strong> Calculates the percentage ratio of critical scenarios where wind limits are exceeded while visibility drops simultaneously.</li>
+                      </ul>
+                    </div>
+                  </section>
+
+                  {/* Section 5 */}
+                  <section style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <h3 style={{ color: '#93c5fd', marginBottom: '8px', fontSize: '1.15rem', fontWeight: 600 }}>
+                      5. Exporting Capabilities
+                    </h3>
+                    <ul style={{ listStyle: 'disc', paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <li>
+                        <strong>📈 Export Graph:</strong> Saves the currently displayed graph as a high-resolution PNG image on your device.
+                      </li>
+                      <li>
+                        <strong>📊 Export Report:</strong> 
+                        Downloads all data for the active tab as an Excel file (.xlsx) formatted with yearly and monthly cross-tables (<code>{'{YEAR}'}/Months</code>). A query parameter summary header is placed at the top of the file.
+                      </li>
+                    </ul>
+                  </section>
+
                 </div>
               </div>
             )}

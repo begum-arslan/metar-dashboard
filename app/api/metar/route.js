@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Papa from 'papaparse';
 import parse from 'metar-parser';
+import { findAirport } from '@/data/airports';
 
 export async function GET(request) {
   try {
@@ -18,12 +19,22 @@ export async function GET(request) {
 
     const iemUrl = new URL('https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py');
     
-    // Support multiple comma-separated stations
+    // Support multiple comma-separated stations and resolve IATA (3-letter) -> ICAO (4-letter)
     const stations = stationParam.split(',');
     stations.forEach(st => {
-      const trimmed = st.trim();
+      const trimmed = st.trim().toUpperCase();
       if (trimmed) {
-        iemUrl.searchParams.append('station', trimmed.toUpperCase());
+        let icaoCode = trimmed;
+        if (trimmed.length === 3) {
+          const found = findAirport(trimmed);
+          if (found && found.icao) {
+            icaoCode = found.icao;
+          } else {
+            // Fallback for US 3-letter codes (e.g. ORD -> KORD)
+            icaoCode = 'K' + trimmed;
+          }
+        }
+        iemUrl.searchParams.append('station', icaoCode);
       }
     });
 
