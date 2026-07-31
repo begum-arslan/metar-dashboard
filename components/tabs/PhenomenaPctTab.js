@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { parseISO } from 'date-fns';
 import { generateOpsmetPctReport } from '@/utils/excelExport';
@@ -9,12 +9,11 @@ const INTENSITIES = [
   { value: 'All', label: 'All Intensities' },
   { value: 'light', label: '(-) Light' },
   { value: 'moderate', label: 'Moderate' },
-  { value: 'heavy', label: '(+) Heavy' },
-  { value: 'in the vicinity', label: '(VC) In the Vicinity' }
+  { value: 'heavy', label: '(+) Heavy' }
 ];
 
 const DESCRIPTORS = [
-  { value: 'All', label: 'All Descriptions' },
+  { value: 'none', label: '(None) No Description' },
   { value: 'blowing', label: '(BL) Blowing' },
   { value: 'shallow', label: '(MI) Shallow' },
   { value: 'patches', label: '(BC) Patches' },
@@ -25,8 +24,17 @@ const DESCRIPTORS = [
   { value: 'thunderstorm', label: '(TS) Thunderstorm' }
 ];
 
+const DESC_TO_CODE = {
+  'blowing': 'BL', 'shallow': 'MI', 'patches': 'BC', 'freezing': 'FZ',
+  'partial': 'PR', 'shower': 'SH', 'low drifting': 'DR', 'thunderstorm': 'TS'
+};
+
 const PHENOMENAS = [
   { value: 'All', label: 'All Phenomena' },
+  { value: 'SN', label: 'SN' },
+  { value: 'RA', label: 'RA' },
+  { value: 'SNRA', label: 'SNRA' },
+  { value: 'RASN', label: 'RASN' },
   { value: 'FG', label: 'FG' },
   { value: 'IC', label: 'IC' },
   { value: 'SS', label: 'SS' },
@@ -43,37 +51,118 @@ const PHENOMENAS = [
   { value: 'GS', label: 'GS' },
   { value: 'HZ', label: 'HZ' },
   { value: 'PO', label: 'PO' },
-  { value: 'SN', label: 'SN' },
   { value: 'FU', label: 'FU' },
-  { value: 'DS', label: 'DS' },
-  { value: 'RA', label: 'RA' }
+  { value: 'DS', label: 'DS' }
 ];
+
+const ALL_DESCRIPTOR_CODES = ['TS', 'SH', 'FZ', 'BL', 'MI', 'BC', 'PR', 'DR'];
+const ALL_PHENOMENA_CODES = ['RA', 'SN', 'DZ', 'FG', 'BR', 'HZ', 'SQ', 'FC', 'SS', 'DS', 'GR', 'GS', 'PL', 'SG', 'IC', 'DU', 'SA', 'VA', 'PO', 'FU'];
+
+function matchMetarToken(rawToken, { appliedIntensity, appliedIncludeVC, appliedDescriptions, appliedPhenomena }) {
+  let t = rawToken.trim().toUpperCase();
+  if (!t || t.startsWith('RE')) return false;
+
+  const isVC = t.startsWith('VC');
+  if (appliedIncludeVC && !isVC) return false;
+  if (!appliedIncludeVC && isVC) return false;
+
+  if (t.startsWith('+') || t.startsWith('-')) {
+    const prefix = t[0];
+    if (appliedIntensity === 'light' && prefix !== '-') return false;
+    if (appliedIntensity === 'heavy' && prefix !== '+') return false;
+    if (appliedIntensity === 'moderate') return false;
+    t = t.slice(1);
+  } else if (isVC) {
+    t = t.slice(2);
+  } else {
+    if (appliedIntensity === 'light' || appliedIntensity === 'heavy') return false;
+  }
+
+  const selectedDescCodes = (appliedDescriptions || []).map(d => DESC_TO_CODE[d]).filter(Boolean);
+  const isNoneDescSelected = (appliedDescriptions || []).includes('none');
+  const hasAnySelectedDesc = selectedDescCodes.length > 0;
+
+  if (hasAnySelectedDesc && !isNoneDescSelected) {
+    if (!selectedDescCodes.some(code => t.includes(code))) return false;
+  } else if (isNoneDescSelected && !hasAnySelectedDesc) {
+    if (ALL_DESCRIPTOR_CODES.some(code => t.includes(code))) return false;
+  } else if (hasAnySelectedDesc && isNoneDescSelected) {
+    const hasSelected = selectedDescCodes.some(code => t.includes(code));
+    const hasAnyDesc = ALL_DESCRIPTOR_CODES.some(code => t.includes(code));
+    if (hasAnyDesc && !hasSelected) return false;
+  }
+
+  const hasSelectedPhenomena = appliedPhenomena && appliedPhenomena.length > 0;
+
+  if (hasSelectedPhenomena) {
+    let phenomMatch = appliedPhenomena.some(phenom => {
+      if (phenom === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
+      if (phenom === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
+      return t.includes(phenom);
+    });
+    if (!phenomMatch) return false;
+
+    if (t.includes('SN') && !appliedPhenomena.includes('SN') && !appliedPhenomena.includes('SNRA') && !appliedPhenomena.includes('RASN')) return false;
+    if (t.includes('RA') && !appliedPhenomena.includes('RA') && !appliedPhenomena.includes('SNRA') && !appliedPhenomena.includes('RASN')) return false;
+  } else {
+    const hasAnyDescFilterActive = (appliedDescriptions && appliedDescriptions.length > 0);
+    if (hasAnyDescFilterActive && !isNoneDescSelected) {
+      if (ALL_PHENOMENA_CODES.some(code => t.includes(code))) return false;
+    }
+  }
+
+  return true;
+}
 
 export default function PhenomenaPctTab({ data, reportInfo }) {
   const chartRef = useRef(null);
+  const descRef = useRef(null);
+  const phenomRef = useRef(null);
   const [intensity, setIntensity] = useState('All');
-  const [description, setDescription] = useState('All');
-  const [phenomena, setPhenomena] = useState('All');
+  const [includeVC, setIncludeVC] = useState(false);
+  const [selectedDescriptions, setSelectedDescriptions] = useState([]);
+  const [selectedPhenomena, setSelectedPhenomena] = useState([]);
   
   const [appliedIntensity, setAppliedIntensity] = useState('All');
-  const [appliedDesc, setAppliedDesc] = useState('All');
-  const [appliedPhenom, setAppliedPhenom] = useState('All');
+  const [appliedIncludeVC, setAppliedIncludeVC] = useState(false);
+  const [appliedDescriptions, setAppliedDescriptions] = useState(null);
+  const [appliedPhenomena, setAppliedPhenomena] = useState(null);
   
+  const [isDescOpen, setIsDescOpen] = useState(false);
+  const [isPhenomenaOpen, setIsPhenomenaOpen] = useState(false);
   const [timeGroup, setTimeGroup] = useState('Hourly'); // 'Hourly', 'Monthly', 'Yearly'
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (descRef.current && !descRef.current.contains(event.target)) {
+        setIsDescOpen(false);
+      }
+      if (phenomRef.current && !phenomRef.current.contains(event.target)) {
+        setIsPhenomenaOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleRun = () => {
     setAppliedIntensity(intensity);
-    setAppliedDesc(description);
-    setAppliedPhenom(phenomena);
+    setAppliedIncludeVC(includeVC);
+    setAppliedDescriptions([...selectedDescriptions]);
+    setAppliedPhenomena([...selectedPhenomena]);
   };
 
   const handleClear = () => {
     setIntensity('All');
-    setDescription('All');
-    setPhenomena('All');
+    setIncludeVC(false);
+    setSelectedDescriptions([]);
+    setSelectedPhenomena([]);
     setAppliedIntensity('All');
-    setAppliedDesc('All');
-    setAppliedPhenom('All');
+    setAppliedIncludeVC(false);
+    setAppliedDescriptions(null);
+    setAppliedPhenomena(null);
   };
 
   const { chartData, totalRecords, totalCriteria, totalMetar } = useMemo(() => {
@@ -88,15 +177,31 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
         
         // Exact Phenomenon Check via raw tokens
         let phenomPass = true;
-        if (appliedPhenom !== 'All') {
+        if (appliedPhenomena && appliedPhenomena.length > 0) {
           const rawStr = (d.raw || '').replace(/\s+(TEMPO|BECMG|NOSIG|PROB30|PROB40)\b.*/i, '');
           const cleanStr = d.station ? rawStr.replace(new RegExp('\\b' + d.station + '\\b', 'gi'), '') : rawStr;
           const rawTokens = cleanStr.split(/\s+/);
           phenomPass = rawTokens.some(t => {
             if (t.startsWith('RE')) return false;
-            if (appliedPhenom === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
-            if (appliedPhenom === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
-            return t.includes(appliedPhenom);
+            const phenomMatch = appliedPhenomena.some(phenom => {
+              if (phenom === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
+              if (phenom === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
+              return t.includes(phenom);
+            });
+            if (!phenomMatch) return false;
+            if (appliedDescriptions && appliedDescriptions.length > 0) {
+              const descCodes = appliedDescriptions.map(d => DESC_TO_CODE[d]).filter(Boolean);
+              if (descCodes.length > 0 && !appliedDescriptions.includes('none')) {
+                return descCodes.some(code => t.includes(code));
+              }
+              if (appliedDescriptions.includes('none')) {
+                const allCodes = Object.values(DESC_TO_CODE);
+                const hasNoDesc = !allCodes.some(code => t.includes(code));
+                if (hasNoDesc) return true;
+                if (descCodes.length > 0) return descCodes.some(code => t.includes(code));
+              }
+            }
+            return true;
           });
         }
         
@@ -104,13 +209,20 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
         if (phenomPass) {
           if (!d.weather || d.weather.length === 0) {
             // If metar-parser didn't parse anything, but we already matched the raw phenom (e.g. SS, PL, DS)
-            if (appliedPhenom !== 'All' && appliedIntensity === 'All' && appliedDesc === 'All') {
+            if (appliedPhenomena && appliedPhenomena.length > 0 && appliedIntensity === 'All' && (!appliedDescriptions || appliedDescriptions.length === 0 || appliedDescriptions.includes('none'))) {
               meetsCriteria = true;
             }
           } else {
             meetsCriteria = d.weather.some(w => {
-              const matchInt = appliedIntensity === 'All' || w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity);
-              const matchDesc = appliedDesc === 'All' || w.descriptor === appliedDesc;
+              const isVC = w.intensity === 'VC' || w.intensity === 'in the vicinity';
+              const matchInt = appliedIntensity === 'All' 
+                ? (appliedIncludeVC ? true : !isVC) 
+                : (appliedIntensity === 'VC' ? isVC : (w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity && !isVC)));
+              const matchDesc = (!appliedDescriptions || appliedDescriptions.length === 0) || 
+                appliedDescriptions.some(desc => {
+                  if (desc === 'none') return !w.descriptor;
+                  return w.descriptor === desc;
+                });
               // If appliedPhenom is set, we already verified it exists in raw tokens.
               return matchInt && matchDesc;
             });
@@ -157,32 +269,46 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
 
         // Criteria check
         let criteriaMet = false;
-        if (d.weather && d.weather.length > 0) {
-          if (appliedPhenom !== 'All') {
-            const rawTokens = (d.raw || '').split(/\s+/);
-            let phenomCode = '';
-            if (appliedPhenom === 'rain') phenomCode = 'RA';
-            else if (appliedPhenom === 'snow') phenomCode = 'SN';
-            else if (appliedPhenom === 'rasn') phenomCode = 'RASN';
-            else if (appliedPhenom === 'snra') phenomCode = 'SNRA';
-            
-            if (phenomCode) {
-              const hasExactPhenom = rawTokens.some(t => {
-                if (t.startsWith('RE')) return false;
-                if (phenomCode === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
-                if (phenomCode === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
-                return t.includes(phenomCode);
-              });
-              if (!hasExactPhenom) return; // Skip rest of checks, this record doesn't meet exact criteria
-            }
-          }
+        const rawStr = (d.raw || '').replace(/\s+(TEMPO|BECMG|NOSIG|PROB30|PROB40)\b.*/i, '');
+        const cleanStr = d.station ? rawStr.replace(new RegExp('\\b' + d.station + '\\b', 'gi'), '') : rawStr;
+        const rawTokens = cleanStr.split(/\s+/);
 
+        const hasMatchingToken = rawTokens.some(t => matchMetarToken(t, { appliedIntensity, appliedIncludeVC, appliedDescriptions, appliedPhenomena }));
+        if (hasMatchingToken) {
+          criteriaMet = true;
+        } else if (d.weather && d.weather.length > 0) {
           criteriaMet = d.weather.some(w => {
-            const matchInt = appliedIntensity === 'All' || w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity);
-            const matchDesc = appliedDesc === 'All' || w.descriptor === appliedDesc;
-            const matchPhen = appliedPhenom === 'All' || 
-              w.precipitation === appliedPhenom || w.obscuration === appliedPhenom || w.other === appliedPhenom ||
-              ['rain', 'snow', 'rasn', 'snra'].includes(appliedPhenom);
+            const isVC = w.intensity === 'VC' || w.intensity === 'in the vicinity';
+            if (appliedIncludeVC && !isVC) return false;
+            if (!appliedIncludeVC && isVC) return false;
+
+            const matchInt = appliedIntensity === 'All' 
+              ? true 
+              : (w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity));
+
+            const matchDesc = (!appliedDescriptions || appliedDescriptions.length === 0) || 
+              appliedDescriptions.some(desc => {
+                if (desc === 'none') return !w.descriptor;
+                return w.descriptor === desc;
+              });
+
+            let matchPhen = true;
+            if (appliedPhenomena && appliedPhenomena.length > 0) {
+              matchPhen = appliedPhenomena.some(ph => {
+                if (ph === 'RA') return w.precipitation === 'rain';
+                if (ph === 'SN') return w.precipitation === 'snow';
+                if (ph === 'FG') return w.obscuration === 'fog';
+                if (ph === 'BR') return w.obscuration === 'mist';
+                if (ph === 'HZ') return w.obscuration === 'haze';
+                if (ph === 'DZ') return w.precipitation === 'drizzle';
+                return true;
+              });
+            } else if (appliedDescriptions && appliedDescriptions.length > 0 && !appliedDescriptions.includes('none')) {
+              if (appliedDescriptions.includes('thunderstorm') && w.descriptor === 'thunderstorm') {
+                if (w.precipitation) return false;
+              }
+            }
+
             return matchInt && matchDesc && matchPhen;
           });
         }
@@ -217,7 +343,7 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
     });
 
     return { chartData: result, totalRecords: records, totalCriteria: critTotal, totalMetar: metTotal };
-  }, [data, appliedIntensity, appliedDesc, appliedPhenom, timeGroup]);
+  }, [data, appliedIntensity, appliedDescriptions, appliedPhenomena, timeGroup]);
 
   return (
     <div style={{ marginTop: '16px' }}>
@@ -232,19 +358,90 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
               {INTENSITIES.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
           </div>
+
+          <div className="form-group" style={{ marginBottom: 0, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
+            <input 
+              type="checkbox" 
+              id="includeVCPct" 
+              checked={includeVC} 
+              onChange={e => setIncludeVC(e.target.checked)} 
+              style={{ width: '16px', height: '16px', cursor: 'pointer', flexShrink: 0 }}
+            />
+            <label htmlFor="includeVCPct" style={{ margin: 0, cursor: 'pointer', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>Include VC (Vicinity)</label>
+          </div>
           
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label htmlFor="descriptionPct">Description</label>
-            <select id="descriptionPct" className={description === 'All' ? 'select-default' : ''} value={description} onChange={e => setDescription(e.target.value)}>
-              {DESCRIPTORS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </select>
+          <div className="form-group" ref={descRef} style={{ marginBottom: 0, position: 'relative' }}>
+            <label>Description</label>
+            <div 
+              onClick={() => setIsDescOpen(!isDescOpen)}
+              style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {selectedDescriptions.length === 0 ? (
+                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>All Descriptions</span>
+                ) : (
+                  selectedDescriptions.map(desc => {
+                    const labelStr = DESCRIPTORS.find(d => d.value === desc)?.label.split(' ')[0] || desc;
+                    return (
+                      <span key={desc} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem' }} onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedDescriptions(prev => prev.filter(d => d !== desc));
+                      }}>{labelStr} ✕</span>
+                    );
+                  })
+                )}
+              </div>
+              <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>▼</span>
+            </div>
+            {isDescOpen && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#1a1a1a', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
+                {DESCRIPTORS.map(opt => (
+                  <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0, fontSize: '0.8rem', textTransform: 'none', letterSpacing: 'normal', fontWeight: 'normal', color: '#e2e8f0' }}>
+                    <input type="checkbox" checked={selectedDescriptions.includes(opt.value)} onChange={() => {
+                      setSelectedDescriptions(prev => prev.includes(opt.value) ? prev.filter(d => d !== opt.value) : [...prev, opt.value]);
+                    }} style={{ margin: 0 }} />
+                    <span>{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="form-group" style={{ marginBottom: 0 }}>
-            <label htmlFor="phenomenaPct">Weather Phenomena</label>
-            <select id="phenomenaPct" className={phenomena === 'All' ? 'select-default' : ''} value={phenomena} onChange={e => setPhenomena(e.target.value)}>
-              {PHENOMENAS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </select>
+          <div className="form-group" ref={phenomRef} style={{ marginBottom: 0, position: 'relative' }}>
+            <label>Weather Phenomena</label>
+            <div 
+              onClick={() => setIsPhenomenaOpen(!isPhenomenaOpen)}
+              style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {selectedPhenomena.length === 0 ? (
+                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>All Phenomena</span>
+                ) : (
+                  selectedPhenomena.map(ph => (
+                    <span key={ph} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem' }} onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedPhenomena(prev => prev.filter(p => p !== ph));
+                    }}>{ph} ✕</span>
+                  ))
+                )}
+              </div>
+              <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>▼</span>
+            </div>
+            {isPhenomenaOpen && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#1a1a1a', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
+                {PHENOMENAS.map(opt => (
+                  <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0, fontSize: '0.8rem', textTransform: 'none', letterSpacing: 'normal', fontWeight: 'normal', color: '#e2e8f0' }}>
+                    <input type="checkbox" checked={selectedPhenomena.includes(opt.value)} onChange={() => {
+                      setSelectedPhenomena(prev => prev.includes(opt.value) ? prev.filter(p => p !== opt.value) : [...prev, opt.value]);
+                    }} style={{ margin: 0 }} />
+                    <span>{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.2' }}>
+              * Selections work independently (OR logic). To filter mixed precipitations, please explicitly select SNRA or RASN options.
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
@@ -271,35 +468,53 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
                 end: reportInfo.end,
                 selectedMonths: reportInfo.selectedMonths,
                 data,
-                extraParams: { INTENSITY: appliedIntensity, DESCRIPTOR: appliedDesc, PHENOMENA: appliedPhenom },
+                extraParams: { INTENSITY: appliedIntensity, DESCRIPTOR: appliedDescriptions ? appliedDescriptions.join(',') : 'All', PHENOMENA: appliedPhenomena ? appliedPhenomena.join(',') : 'All' },
                 criteriaFn: (d) => {
-                  if (!d.weather || d.weather.length === 0) {
-                    if (appliedIntensity === 'All' && appliedDesc === 'All' && appliedPhenom === 'All') return false;
-                    return false;
+                  const rawStr = (d.raw || '').replace(/\s+(TEMPO|BECMG|NOSIG|PROB30|PROB40)\b.*/i, '');
+                  const cleanStr = d.station ? rawStr.replace(new RegExp('\\b' + d.station + '\\b', 'gi'), '') : rawStr;
+                  const rawTokens = cleanStr.split(/\s+/);
+
+                  const hasMatchingToken = rawTokens.some(t => matchMetarToken(t, { appliedIntensity, appliedIncludeVC, appliedDescriptions, appliedPhenomena }));
+                  if (hasMatchingToken) return true;
+
+                  if (d.weather && d.weather.length > 0) {
+                    return d.weather.some(w => {
+                      const isVC = w.intensity === 'VC' || w.intensity === 'in the vicinity';
+                      if (appliedIncludeVC && !isVC) return false;
+                      if (!appliedIncludeVC && isVC) return false;
+
+                      const matchInt = appliedIntensity === 'All' 
+                        ? true 
+                        : (w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity));
+
+                      const matchDesc = (!appliedDescriptions || appliedDescriptions.length === 0) || 
+                        appliedDescriptions.some(desc => {
+                          if (desc === 'none') return !w.descriptor;
+                          return w.descriptor === desc;
+                        });
+
+                      let matchPhen = true;
+                      if (appliedPhenomena && appliedPhenomena.length > 0) {
+                        matchPhen = appliedPhenomena.some(ph => {
+                          if (ph === 'RA') return w.precipitation === 'rain';
+                          if (ph === 'SN') return w.precipitation === 'snow';
+                          if (ph === 'FG') return w.obscuration === 'fog';
+                          if (ph === 'BR') return w.obscuration === 'mist';
+                          if (ph === 'HZ') return w.obscuration === 'haze';
+                          if (ph === 'DZ') return w.precipitation === 'drizzle';
+                          return true;
+                        });
+                      } else if (appliedDescriptions && appliedDescriptions.length > 0 && !appliedDescriptions.includes('none')) {
+                        if (appliedDescriptions.includes('thunderstorm') && w.descriptor === 'thunderstorm') {
+                          if (w.precipitation) return false;
+                        }
+                      }
+
+                      return matchInt && matchDesc && matchPhen;
+                    });
                   }
-                  if (appliedPhenom !== 'All') {
-                    const rawTokens = (d.raw || '').split(/\s+/);
-                    let phenomCode = '';
-                    if (appliedPhenom === 'rain') phenomCode = 'RA';
-                    else if (appliedPhenom === 'snow') phenomCode = 'SN';
-                    else if (appliedPhenom === 'rasn') phenomCode = 'RASN';
-                    else if (appliedPhenom === 'snra') phenomCode = 'SNRA';
-                    
-                    if (phenomCode) {
-                      const hasExactPhenom = rawTokens.some(t => {
-                        if (t.startsWith('RE')) return false;
-                        if (phenomCode === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
-                        if (phenomCode === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
-                        return t.includes(phenomCode);
-                      });
-                      if (!hasExactPhenom) return false;
-                    }
-                  }
-                  return d.weather.some(w => {
-                    const matchInt = appliedIntensity === 'All' || w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity);
-                    const matchDesc = appliedDesc === 'All' || w.descriptor === appliedDesc;
-                    return matchInt && matchDesc;
-                  });
+
+                  return false;
                 },
               });
               }}

@@ -1017,12 +1017,14 @@ export default function Home() {
                   <button 
                     className="dropdown-item"
                     onClick={() => { setActiveModal('guide'); setIsMenuOpen(false); }}
+                    style={{ whiteSpace: 'nowrap', fontWeight: 'bold' }}
                   >
                     <span style={{ fontSize: '1.1rem' }}>📖</span> User Guide
                   </button>
                   <button 
                     className="dropdown-item"
                     onClick={() => { setActiveModal('contact'); setIsMenuOpen(false); }}
+                    style={{ whiteSpace: 'nowrap', fontWeight: 'bold' }}
                   >
                     <span style={{ fontSize: '1.1rem' }}>✉️</span> Contact
                   </button>
