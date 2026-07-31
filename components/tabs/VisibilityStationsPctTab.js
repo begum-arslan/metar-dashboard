@@ -214,11 +214,13 @@ export default function VisibilityStationsPctTab() {
                 onChange={(date) => { if (date) setStartDate(format(date, 'yyyy-MM-dd')); }}
                 dateFormat="yyyy-MM-dd"
                 className="date-picker-input"
-                maxDate={endDate ? parseISO(endDate) : null}
+                minDate={parseISO('1998-01-01')}
+                maxDate={endDate ? parseISO(endDate) : new Date()}
                 showYearDropdown
                 showMonthDropdown
-                scrollableYearDropdown
-                yearDropdownItemNumber={30}
+                dropdownMode="select"
+                calendarStartDay={1}
+                fixedHeight
                 required
                 autoComplete="off"
               />
@@ -232,10 +234,12 @@ export default function VisibilityStationsPctTab() {
                 dateFormat="yyyy-MM-dd"
                 className="date-picker-input"
                 minDate={startDate ? parseISO(startDate) : parseISO('1998-01-01')}
+                maxDate={new Date()}
                 showYearDropdown
                 showMonthDropdown
-                scrollableYearDropdown
-                yearDropdownItemNumber={30}
+                dropdownMode="select"
+                calendarStartDay={1}
+                fixedHeight
                 required
                 autoComplete="off"
               />

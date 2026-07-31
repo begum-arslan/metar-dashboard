@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { parseISO } from 'date-fns';
 import { generateOpsmetPctReport } from '@/utils/excelExport';
@@ -10,17 +10,34 @@ const TYPES = ['CB', 'TCU'];
 
 export default function CloudTypePctTab({ data, reportInfo }) {
   const chartRef = useRef(null);
+  const coverageRef = useRef(null);
+  const typeRef = useRef(null);
 
   const [selectedCoverages, setSelectedCoverages] = useState([]);
   const [selectedTypes, setSelectedTypes] = useState([]);
 
-  const [appliedCoverages, setAppliedCoverages] = useState(null);
-  const [appliedTypes, setAppliedTypes] = useState(null);
+  const [appliedCoverages, setAppliedCoverages] = useState([]);
+  const [appliedTypes, setAppliedTypes] = useState([]);
 
   const [isCoverageOpen, setIsCoverageOpen] = useState(false);
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   
   const [timeGroup, setTimeGroup] = useState('Hourly'); // 'Hourly', 'Monthly', 'Yearly'
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (coverageRef.current && !coverageRef.current.contains(event.target)) {
+        setIsCoverageOpen(false);
+      }
+      if (typeRef.current && !typeRef.current.contains(event.target)) {
+        setIsTypeOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleRun = () => {
     setAppliedCoverages([...selectedCoverages]);
@@ -140,18 +157,27 @@ export default function CloudTypePctTab({ data, reportInfo }) {
         {/* Sidebar Filters */}
         <div className="glass-container" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
-          <div className="form-group" style={{ marginBottom: 0, position: 'relative' }}>
+          <div className="form-group" ref={coverageRef} style={{ marginBottom: 0, position: 'relative' }}>
             <label>Cloud Coverage</label>
             <div 
               onClick={() => setIsCoverageOpen(!isCoverageOpen)}
-              style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '1rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             >
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {selectedCoverages.length === 0 ? (
                   <span style={{ color: 'rgba(255,255,255,0.3)' }}>e.g. BKN, OVC</span>
                 ) : (
                   selectedCoverages.map(cov => (
-                    <span key={cov} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>{cov} ✕</span>
+                    <span 
+                      key={cov} 
+                      style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCoverage(cov);
+                      }}
+                    >
+                      {cov} ✕
+                    </span>
                   ))
                 )}
               </div>
@@ -160,7 +186,7 @@ export default function CloudTypePctTab({ data, reportInfo }) {
             {isCoverageOpen && (
               <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#1a1a1a', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {COVERAGES.map(cov => (
-                  <label key={cov} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
+                  <label key={cov} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0, fontSize: '0.8rem', textTransform: 'none', letterSpacing: 'normal', fontWeight: 'normal', color: '#e2e8f0' }}>
                     <input type="checkbox" checked={selectedCoverages.includes(cov)} onChange={() => toggleCoverage(cov)} style={{ margin: 0 }} />
                     <span>{cov}</span>
                   </label>
@@ -169,18 +195,27 @@ export default function CloudTypePctTab({ data, reportInfo }) {
             )}
           </div>
 
-          <div className="form-group" style={{ marginBottom: 0, position: 'relative' }}>
+          <div className="form-group" ref={typeRef} style={{ marginBottom: 0, position: 'relative' }}>
             <label>Cloud Type</label>
             <div 
               onClick={() => setIsTypeOpen(!isTypeOpen)}
-              style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '1rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             >
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {selectedTypes.length === 0 ? (
                   <span style={{ color: 'rgba(255,255,255,0.3)' }}>e.g. CB</span>
                 ) : (
                   selectedTypes.map(typ => (
-                    <span key={typ} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>{typ} ✕</span>
+                    <span 
+                      key={typ} 
+                      style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleType(typ);
+                      }}
+                    >
+                      {typ} ✕
+                    </span>
                   ))
                 )}
               </div>
@@ -189,7 +224,7 @@ export default function CloudTypePctTab({ data, reportInfo }) {
             {isTypeOpen && (
               <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#1a1a1a', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '8px', zIndex: 11, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {TYPES.map(typ => (
-                  <label key={typ} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
+                  <label key={typ} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0, fontSize: '0.8rem', textTransform: 'none', letterSpacing: 'normal', fontWeight: 'normal', color: '#e2e8f0' }}>
                     <input type="checkbox" checked={selectedTypes.includes(typ)} onChange={() => toggleType(typ)} style={{ margin: 0 }} />
                     <span>{typ}</span>
                   </label>

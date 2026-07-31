@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { parseISO } from 'date-fns';
 import { generateOpsmetPctReport } from '@/utils/excelExport';
@@ -9,6 +9,7 @@ const COVERAGES = ['FEW', 'SCT', 'BKN', 'OVC', 'VV'];
 
 export default function CeilingPctTab({ data, reportInfo }) {
   const chartRef = useRef(null);
+  const dropdownRef = useRef(null);
   const [thresholdInput, setThresholdInput] = useState('');
   const [appliedThreshold, setAppliedThreshold] = useState(null);
   const [selectedCoverages, setSelectedCoverages] = useState([]); // Empty implies all
@@ -16,6 +17,18 @@ export default function CeilingPctTab({ data, reportInfo }) {
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [timeGroup, setTimeGroup] = useState('Hourly'); // 'Hourly', 'Monthly', 'Yearly'
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleRun = () => {
     const val = parseInt(thresholdInput, 10);
@@ -147,18 +160,25 @@ export default function CeilingPctTab({ data, reportInfo }) {
             />
           </div>
 
-          <div className="form-group" style={{ marginBottom: 0, position: 'relative' }}>
+          <div className="form-group" ref={dropdownRef} style={{ marginBottom: 0, position: 'relative' }}>
             <label>Cloud Coverage</label>
             <div 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '1rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             >
               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {selectedCoverages.length === 0 ? (
                   <span style={{ color: 'rgba(255,255,255,0.3)' }}>All</span>
                 ) : (
                   selectedCoverages.map(cov => (
-                    <span key={cov} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.85rem' }}>
+                    <span 
+                      key={cov} 
+                      style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCoverage(cov);
+                      }}
+                    >
                       {cov} ✕
                     </span>
                   ))
@@ -170,7 +190,7 @@ export default function CeilingPctTab({ data, reportInfo }) {
             {isDropdownOpen && (
               <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#1a1a1a', border: '1px solid var(--card-border)', borderRadius: '8px', padding: '8px', zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {COVERAGES.map(cov => (
-                  <label key={cov} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
+                  <label key={cov} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0, fontSize: '0.8rem', textTransform: 'none', letterSpacing: 'normal', fontWeight: 'normal', color: '#e2e8f0' }}>
                     <input 
                       type="checkbox" 
                       checked={selectedCoverages.includes(cov)}

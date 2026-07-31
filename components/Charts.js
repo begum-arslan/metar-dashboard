@@ -489,10 +489,31 @@ export default function Charts({ data, startDate, endDate }) {
               <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
               <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} unit="°C" />
               <Tooltip contentStyle={tooltipStyle} formatter={(val) => [`${val}°C`, undefined]} />
-              <Legend verticalAlign="top" height={36} />
-              <Line type="monotone" dataKey="Max" name="Max Temperature" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 4, fill: '#ef4444' }} />
-              <Line type="monotone" dataKey="Avg" name="Avg Temperature" stroke="#22c55e" strokeWidth={2.5} dot={{ r: 4, fill: '#22c55e' }} />
+              <Legend 
+                verticalAlign="top" 
+                height={36} 
+                content={(props) => {
+                  const { payload } = props;
+                  if (!payload) return null;
+                  const order = ['Min Temperature', 'Avg Temperature', 'Max Temperature'];
+                  const sorted = order.map(val => payload.find(p => p.value === val)).filter(Boolean);
+                  return (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '14px', fontWeight: 500, marginBottom: '12px' }}>
+                      {sorted.map((entry, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', color: entry.color }}>
+                          <span style={{ width: 16, height: 2, backgroundColor: entry.color, marginRight: 6, display: 'inline-block', position: 'relative' }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: entry.color, position: 'absolute', top: -2, left: 5 }}></span>
+                          </span>
+                          {entry.value}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }}
+              />
               <Line type="monotone" dataKey="Min" name="Min Temperature" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 4, fill: '#3b82f6' }} />
+              <Line type="monotone" dataKey="Avg" name="Avg Temperature" stroke="#22c55e" strokeWidth={2.5} dot={{ r: 4, fill: '#22c55e' }} />
+              <Line type="monotone" dataKey="Max" name="Max Temperature" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 4, fill: '#ef4444' }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

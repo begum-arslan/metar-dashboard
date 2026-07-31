@@ -213,12 +213,34 @@ export default function PressureWithoutValueTab({ data, reportInfo }) {
                   contentStyle={{ backgroundColor: 'var(--secondary)', border: '1px solid var(--card-border)', borderRadius: '8px' }} 
                   cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                 />
-                <Legend verticalAlign="top" height={36} iconType="rect" align="center" wrapperStyle={{ marginBottom: '16px' }} />
+                <Legend 
+                  verticalAlign="top" 
+                  height={36} 
+                  iconType="rect" 
+                  align="center" 
+                  wrapperStyle={{ marginBottom: '16px' }}
+                  content={(props) => {
+                    const { payload } = props;
+                    if (!payload) return null;
+                    const order = ['Min', 'Avg', 'Max'];
+                    const sorted = order.map(val => payload.find(p => p.value === val)).filter(Boolean);
+                    return (
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '14px', fontWeight: 500, marginBottom: '12px' }}>
+                        {sorted.map((entry, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', color: entry.color }}>
+                            <span style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: entry.color, marginRight: 6, display: 'inline-block' }}></span>
+                            {entry.value}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }}
+                />
                 
-                {/* Max: Pink, Avg: Amber, Min: Blue */}
-                <Bar dataKey="Max" fill="#fb7185" name="Max" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="Avg" fill="#fbbf24" name="Avg" radius={[2, 2, 0, 0]} />
+                {/* Min: Blue, Avg: Amber, Max: Pink */}
                 <Bar dataKey="Min" fill="#60a5fa" name="Min" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Avg" fill="#fbbf24" name="Avg" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Max" fill="#fb7185" name="Max" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

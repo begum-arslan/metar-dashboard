@@ -841,7 +841,14 @@ export default function Home() {
                     <span style={{ color: 'rgba(255,255,255,0.4)' }}>All Months (No Filter)</span>
                   ) : (
                     selectedMonths.map(m => (
-                      <span key={m} style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                      <span 
+                        key={m} 
+                        style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleMonth(m);
+                        }}
+                      >
                         {MONTHS_OPTIONS.find(mo => mo.value === m)?.label.substring(0, 3)} ✕
                       </span>
                     ))
