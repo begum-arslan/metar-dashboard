@@ -72,6 +72,10 @@ export async function GET(request) {
     const results = [];
     for (const row of parsedCsv.data) {
       if (row.metar && typeof row.metar === 'string' && row.metar.trim() !== '') {
+        // Skip high-frequency ASOS observations (MADISHF) — these are 5-minute
+        // automated readings from US stations, NOT standard METAR/SPECI reports.
+        // Keeping them would inflate data counts (~630 vs ~50 for 2 days).
+        if (/\bMADISHF\b/i.test(row.metar)) continue;
         try {
           // Strip TEMPO/BECMG/NOSIG/PROB30/PROB40 trend sections — only parse observed weather
           const observedMetar = row.metar.replace(/\s+(TEMPO|BECMG|NOSIG|PROB30|PROB40)\b.*/i, '');
