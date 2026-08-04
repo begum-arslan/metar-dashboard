@@ -136,8 +136,11 @@ function ensureCell(ws, r, c, style) {
  * Generate an Opsmet-style Excel report (.xlsx) with professional styling.
  */
 export function generateOpsmetReport(params) {
-  if (params.analysis && (params.analysis.includes('Without Value') || params.analysis.includes('temperature-without-value'))) {
+  if (params.analysis && (params.analysis.toLowerCase().includes('temperature') && params.analysis.includes('Without Value'))) {
     return generateTemperatureWithoutValueReport(params);
+  }
+  if (params.analysis && (params.analysis.toLowerCase().includes('pressure') && params.analysis.includes('Without Value'))) {
+    return generatePressureWithoutValueReport(params);
   }
 
   const {
@@ -602,6 +605,232 @@ export function generateTemperatureWithoutValueReport(params) {
   }
 
   const fileName = `${airport || 'report'}-temperature-without-value-report.xlsx`;
+  XLSX.writeFile(wb, fileName, { bookType: 'xlsx' });
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+//  generatePressureWithoutValueReport  (Pressure Without Value tables)
+// ═══════════════════════════════════════════════════════════════════════
+
+export function generatePressureWithoutValueReport(params) {
+  const {
+    analysis = 'Pressure (Without Value)',
+    airport,
+    begin,
+    end,
+    extraParams = {},
+    selectedMonths = [],
+    data,
+  } = params;
+
+  const parsed = [];
+  for (const d of data) {
+    try {
+      if (typeof d.pressureHpa !== 'number' || isNaN(d.pressureHpa)) continue;
+      const dateStr = d.valid.includes('T') ? d.valid : `${d.valid.replace(' ', 'T')}Z`;
+      const dt = parseISO(dateStr);
+      if (isNaN(dt.getTime())) continue;
+      if (selectedMonths.length > 0 && !selectedMonths.includes(dt.getUTCMonth())) continue;
+      parsed.push({ ...d, _dt: dt });
+    } catch {
+      // skip invalid
+    }
+  }
+
+  if (parsed.length === 0) {
+    alert('No data to export.');
+    return;
+  }
+
+  const stations = [...new Set(parsed.map(d => d.station))];
+  const wb = XLSX.utils.book_new();
+
+  for (const st of stations) {
+    const stationParsed = parsed.filter(d => d.station === st);
+    if (stationParsed.length === 0) continue;
+
+    const years = [...new Set(stationParsed.map(d => d._dt.getUTCFullYear()))].sort((a, b) => a - b);
+
+    const buckets = {};
+    const totalBucket = {};
+
+    for (let h = 0; h < 24; h++) {
+      totalBucket[h] = {};
+      for (let m = 0; m < 12; m++) {
+        totalBucket[h][m] = [];
+      }
+    }
+
+    for (const yr of years) {
+      buckets[yr] = {};
+      for (let h = 0; h < 24; h++) {
+        buckets[yr][h] = {};
+        for (let m = 0; m < 12; m++) {
+          buckets[yr][h][m] = [];
+        }
+      }
+    }
+
+    for (const d of stationParsed) {
+      const yr = d._dt.getUTCFullYear();
+      const mo = d._dt.getUTCMonth();
+      const hr = d._dt.getUTCHours();
+      if (buckets[yr] && buckets[yr][hr]) {
+        buckets[yr][hr][mo].push(d.pressureHpa);
+      }
+      totalBucket[hr][mo].push(d.pressureHpa);
+    }
+
+    const monthsArray = selectedMonths.length > 0
+      ? selectedMonths.map(m => m + 1)
+      : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+    const queryObj = {
+      ANALYSIS: 'Pressure (Without Value)',
+      AIRPORT: airport || st,
+      BEGIN: begin,
+      END: end,
+      MONTHS: monthsArray,
+      PRESSURE_MIN: 900,
+      PRESSURE_MAX: 1100,
+      PERCENTILE: extraParams.PERCENTILE !== undefined ? extraParams.PERCENTILE : null
+    };
+    const queryDesc = JSON.stringify(queryObj);
+
+    const COLS = 37;
+    const rows = [];
+
+    const titleRow = new Array(COLS).fill('');
+    titleRow[0] = `${airport || st} Pressure (Without Value) Report`;
+    rows.push(titleRow);
+
+    const qdRow = new Array(COLS).fill('');
+    qdRow[0] = 'Query Description';
+    rows.push(qdRow);
+
+    const qpRow = new Array(COLS).fill('');
+    qpRow[0] = queryDesc;
+    rows.push(qpRow);
+
+    rows.push(new Array(COLS).fill(''));
+
+    function addYearBlock(label, bucket) {
+      const yearRow = new Array(COLS).fill('');
+      yearRow[0] = `${label}/Months`;
+      for (let m = 0; m < 12; m++) {
+        yearRow[1 + m * 3] = MONTH_NAMES[m];
+        yearRow[2 + m * 3] = '';
+        yearRow[3 + m * 3] = '';
+      }
+      rows.push(yearRow);
+
+      const subRow = new Array(COLS).fill('');
+      subRow[0] = 'Hours';
+      for (let m = 0; m < 12; m++) {
+        subRow[1 + m * 3] = 'Max';
+        subRow[2 + m * 3] = 'Avg';
+        subRow[3 + m * 3] = 'Min';
+      }
+      rows.push(subRow);
+
+      for (let h = 0; h < 24; h++) {
+        const hRow = new Array(COLS).fill('');
+        hRow[0] = h;
+        for (let m = 0; m < 12; m++) {
+          const pressures = bucket[h][m];
+          if (pressures && pressures.length > 0) {
+            const minVal = Math.min(...pressures);
+            const maxVal = Math.max(...pressures);
+            const avgVal = parseFloat((pressures.reduce((a, b) => a + b, 0) / pressures.length).toFixed(1));
+            hRow[1 + m * 3] = maxVal;
+            hRow[2 + m * 3] = avgVal;
+            hRow[3 + m * 3] = minVal;
+          }
+        }
+        rows.push(hRow);
+      }
+
+      rows.push(new Array(COLS).fill(''));
+    }
+
+    for (const yr of years) {
+      addYearBlock(String(yr), buckets[yr]);
+    }
+
+    const hasTotal = years.length > 1;
+    if (hasTotal) {
+      addYearBlock(`${years[0]}-${years[years.length - 1]}`, totalBucket);
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    const colWidths = [{ wch: 18 }];
+    for (let c = 1; c < COLS; c++) {
+      colWidths.push({ wch: 8 });
+    }
+    ws['!cols'] = colWidths;
+
+    ws['!rows'] = [];
+    ws['!rows'][0] = { hpt: 28 };
+
+    for (let c = 0; c < COLS; c++) ensureCell(ws, 0, c, styles.title);
+
+    ensureCell(ws, 1, 0, styles.queryLabel);
+    for (let c = 1; c < COLS; c++) ensureCell(ws, 1, c, styles.queryLabel);
+    ensureCell(ws, 2, 0, styles.queryValue);
+    for (let c = 1; c < COLS; c++) ensureCell(ws, 2, c, styles.queryValue);
+
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: COLS - 1 } },
+      { s: { r: 2, c: 0 }, e: { r: 2, c: COLS - 1 } },
+    ];
+
+    let currentRow = 4;
+    const totalBlocks = years.length + (hasTotal ? 1 : 0);
+
+    for (let block = 0; block < totalBlocks; block++) {
+      const isTotal = hasTotal && block === totalBlocks - 1;
+      const yearHeaderStyle = isTotal ? styles.totalYearHeader : styles.yearHeader;
+      const monthStyle = isTotal ? styles.totalMonthHeader : styles.monthHeader;
+      const subStyle = isTotal ? styles.totalSubHeader : styles.subHeader;
+
+      for (let c = 0; c < COLS; c++) ensureCell(ws, currentRow, c, yearHeaderStyle);
+
+      for (let m = 0; m < 12; m++) {
+        const startCol = 1 + m * 3;
+        ensureCell(ws, currentRow, startCol, monthStyle);
+        ensureCell(ws, currentRow, startCol + 1, monthStyle);
+        ensureCell(ws, currentRow, startCol + 2, monthStyle);
+        ws['!merges'].push({
+          s: { r: currentRow, c: startCol },
+          e: { r: currentRow, c: startCol + 2 }
+        });
+      }
+
+      for (let c = 0; c < COLS; c++) ensureCell(ws, currentRow + 1, c, subStyle);
+
+      for (let h = 0; h < 24; h++) {
+        const dataRow = currentRow + 2 + h;
+        const rowStyle = h % 2 === 0 ? styles.dataEven : styles.dataOdd;
+        ensureCell(ws, dataRow, 0, styles.hourLabel);
+        for (let c = 1; c < COLS; c++) {
+          ensureCell(ws, dataRow, c, rowStyle);
+        }
+      }
+
+      ws['!rows'][currentRow] = { hpt: 24 };
+      ws['!rows'][currentRow + 1] = { hpt: 20 };
+
+      currentRow += 27;
+    }
+
+    ws['!freeze'] = { xSplit: 1, ySplit: 4 };
+
+    XLSX.utils.book_append_sheet(wb, ws, st.substring(0, 31));
+  }
+
+  const fileName = `${airport || 'report'}-pressure-without-value-report.xlsx`;
   XLSX.writeFile(wb, fileName, { bookType: 'xlsx' });
 }
 

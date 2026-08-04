@@ -139,20 +139,20 @@ export default function TemperaturePctTab({ data, reportInfo }) {
           </div>
 
           <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-            <button className="btn-primary" style={{ flex: 1 }} onClick={handleRun}>▶ Run</button>
-            <button className="btn-primary" style={{ flex: 1, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171' }} onClick={handleClear}>✕ Clear</button>
+            <button className="btn-primary" style={{ flex: 1, minWidth: 0 }} onClick={handleRun}>▶ Run</button>
+            <button className="btn-primary" style={{ flex: 1, minWidth: 0, background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#f87171' }} onClick={handleClear}>✕ Clear</button>
           </div>
           <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
             <button 
               className="btn-primary" 
-              style={{ flex: 1, padding: '6px 12px', fontSize: '13px', background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', border: 'none', color: '#ffffff', boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+              style={{ flex: 1, minWidth: 0, padding: '6px 12px', fontSize: '13px', background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', border: 'none', color: '#ffffff', boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
               onClick={() => exportGraphAsPNG(chartRef, 'TemperaturePctTab.png')}
             >
               📈 Export Graph
             </button>
             <button 
               className="btn-primary" 
-              style={{ flex: 1, padding: '6px 12px', fontSize: '13px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', color: '#ffffff', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+              style={{ flex: 1, minWidth: 0, padding: '6px 12px', fontSize: '13px', background: 'linear-gradient(135deg, #10b981, #059669)', border: 'none', color: '#ffffff', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)', fontWeight: 500, textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
               onClick={() => {
                 if (!reportInfo) return;
                 const { minTemp, maxTemp } = appliedFilters;
