@@ -33,8 +33,6 @@ const PHENOMENAS = [
   { value: 'All', label: 'All Phenomena' },
   { value: 'SN', label: 'SN' },
   { value: 'RA', label: 'RA' },
-  { value: 'SNRA', label: 'SNRA' },
-  { value: 'RASN', label: 'RASN' },
   { value: 'FG', label: 'FG' },
   { value: 'IC', label: 'IC' },
   { value: 'SS', label: 'SS' },
@@ -54,6 +52,16 @@ const PHENOMENAS = [
   { value: 'FU', label: 'FU' },
   { value: 'DS', label: 'DS' }
 ];
+
+// Known combined phenomena tokens
+const COMBINED_TOKENS = ['SNRA', 'RASN', 'DZRA', 'RADZ'];
+
+function getEffectivePhenomena(selectedList, isCombine) {
+  if (!isCombine || selectedList.length < 2) return selectedList;
+  // Combine all selected codes in order into a single token
+  const combined = selectedList.join('');
+  return [combined];
+}
 
 const ALL_DESCRIPTOR_CODES = ['TS', 'SH', 'FZ', 'BL', 'MI', 'BC', 'PR', 'DR'];
 const ALL_PHENOMENA_CODES = ['RA', 'SN', 'DZ', 'FG', 'BR', 'HZ', 'SQ', 'FC', 'SS', 'DS', 'GR', 'GS', 'PL', 'SG', 'IC', 'DU', 'SA', 'VA', 'PO', 'FU'];
@@ -96,14 +104,22 @@ function matchMetarToken(rawToken, { appliedIntensity, appliedIncludeVC, applied
 
   if (hasSelectedPhenomena) {
     let phenomMatch = appliedPhenomena.some(phenom => {
-      if (phenom === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
+      // Check if this is a combined token (e.g. SNRA, RASN, DZRA, RADZ)
+      if (COMBINED_TOKENS.includes(phenom) || phenom.length > 2) {
+        return t.includes(phenom);
+      }
+      // Single phenomena: exclude combined tokens that contain this code
+      if (phenom === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA') && !t.includes('DZRA') && !t.includes('RADZ');
       if (phenom === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
+      if (phenom === 'DZ') return t.includes('DZ') && !t.includes('DZRA') && !t.includes('RADZ');
       return t.includes(phenom);
     });
     if (!phenomMatch) return false;
 
-    if (t.includes('SN') && !appliedPhenomena.includes('SN') && !appliedPhenomena.includes('SNRA') && !appliedPhenomena.includes('RASN')) return false;
-    if (t.includes('RA') && !appliedPhenomena.includes('RA') && !appliedPhenomena.includes('SNRA') && !appliedPhenomena.includes('RASN')) return false;
+    // Prevent false positives: if token contains SN/RA/DZ but those aren't in the filter, reject
+    if (t.includes('SN') && !appliedPhenomena.includes('SN') && !appliedPhenomena.some(p => p.includes('SN'))) return false;
+    if (t.includes('RA') && !appliedPhenomena.includes('RA') && !appliedPhenomena.some(p => p.includes('RA'))) return false;
+    if (t.includes('DZ') && !appliedPhenomena.includes('DZ') && !appliedPhenomena.some(p => p.includes('DZ'))) return false;
   } else {
     const hasAnyDescFilterActive = (appliedDescriptions && appliedDescriptions.length > 0);
     if (hasAnyDescFilterActive && !isNoneDescSelected) {
@@ -122,6 +138,7 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
   const [includeVC, setIncludeVC] = useState(false);
   const [selectedDescriptions, setSelectedDescriptions] = useState([]);
   const [selectedPhenomena, setSelectedPhenomena] = useState([]);
+  const [combineMode, setCombineMode] = useState(false);
   
   const [appliedIntensity, setAppliedIntensity] = useState('All');
   const [appliedIncludeVC, setAppliedIncludeVC] = useState(false);
@@ -131,6 +148,11 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
   const [isDescOpen, setIsDescOpen] = useState(false);
   const [isPhenomenaOpen, setIsPhenomenaOpen] = useState(false);
   const [timeGroup, setTimeGroup] = useState('Hourly'); // 'Hourly', 'Monthly', 'Yearly'
+
+  // Preview of combined phenomena string
+  const combinedPreview = combineMode && selectedPhenomena.length >= 2
+    ? selectedPhenomena.join('')
+    : null;
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -151,7 +173,7 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
     setAppliedIntensity(intensity);
     setAppliedIncludeVC(includeVC);
     setAppliedDescriptions([...selectedDescriptions]);
-    setAppliedPhenomena([...selectedPhenomena]);
+    setAppliedPhenomena(getEffectivePhenomena([...selectedPhenomena], combineMode));
   };
 
   const handleClear = () => {
@@ -159,6 +181,7 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
     setIncludeVC(false);
     setSelectedDescriptions([]);
     setSelectedPhenomena([]);
+    setCombineMode(false);
     setAppliedIntensity('All');
     setAppliedIncludeVC(false);
     setAppliedDescriptions(null);
@@ -184,8 +207,13 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
           phenomPass = rawTokens.some(t => {
             if (t.startsWith('RE')) return false;
             const phenomMatch = appliedPhenomena.some(phenom => {
-              if (phenom === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA');
+              // Check if this is a combined token (e.g. SNRA, RASN, DZRA, RADZ)
+              if (COMBINED_TOKENS.includes(phenom) || phenom.length > 2) {
+                return t.includes(phenom);
+              }
+              if (phenom === 'RA') return t.includes('RA') && !t.includes('RASN') && !t.includes('SNRA') && !t.includes('DZRA') && !t.includes('RADZ');
               if (phenom === 'SN') return t.includes('SN') && !t.includes('RASN') && !t.includes('SNRA');
+              if (phenom === 'DZ') return t.includes('DZ') && !t.includes('DZRA') && !t.includes('RADZ');
               return t.includes(phenom);
             });
             if (!phenomMatch) return false;
@@ -301,6 +329,8 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
                 if (ph === 'BR') return w.obscuration === 'mist';
                 if (ph === 'HZ') return w.obscuration === 'haze';
                 if (ph === 'DZ') return w.precipitation === 'drizzle';
+                // Combined tokens (SNRA, RASN, DZRA, RADZ etc.) are handled via raw token matching
+                if (ph.length > 2) return false;
                 return true;
               });
             } else if (appliedDescriptions && appliedDescriptions.length > 0 && !appliedDescriptions.includes('none')) {
@@ -435,12 +465,38 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
                       setSelectedPhenomena(prev => prev.includes(opt.value) ? prev.filter(p => p !== opt.value) : [...prev, opt.value]);
                     }} style={{ margin: 0 }} />
                     <span>{opt.label}</span>
+                    {combineMode && selectedPhenomena.includes(opt.value) && (
+                      <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: '#60a5fa', fontWeight: 600 }}>
+                        {selectedPhenomena.indexOf(opt.value) + 1}.
+                      </span>
+                    )}
                   </label>
                 ))}
               </div>
             )}
+
+            <div className="form-group" style={{ marginBottom: 0, marginTop: '8px', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
+              <input 
+                type="checkbox" 
+                id="combineModeP" 
+                checked={combineMode} 
+                onChange={e => { setCombineMode(e.target.checked); setIsPhenomenaOpen(false); }} 
+                style={{ width: '16px', height: '16px', cursor: 'pointer', flexShrink: 0 }}
+              />
+              <label htmlFor="combineModeP" style={{ margin: 0, cursor: 'pointer', fontSize: '0.8rem', whiteSpace: 'nowrap', color: combineMode ? '#60a5fa' : 'inherit' }}>Combine</label>
+            </div>
+
+            {combinedPreview && (
+              <div style={{ fontSize: '0.75rem', color: '#34d399', marginTop: '4px', padding: '6px 10px', background: 'rgba(52, 211, 153, 0.1)', borderRadius: '6px', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
+                → Search for: <strong>{combinedPreview}</strong>
+              </div>
+            )}
+
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.2' }}>
-              * Selections work independently (OR logic). To filter mixed precipitations, please explicitly select SNRA or RASN options.
+              {combineMode 
+                ? '* In Combine mode, selection order matters. Selected phenomena are concatenated in order.' 
+                : '* In normal mode, selections are searched independently (OR logic).'
+              }
             </div>
           </div>
 
@@ -502,6 +558,8 @@ export default function PhenomenaPctTab({ data, reportInfo }) {
                           if (ph === 'BR') return w.obscuration === 'mist';
                           if (ph === 'HZ') return w.obscuration === 'haze';
                           if (ph === 'DZ') return w.precipitation === 'drizzle';
+                          // Combined tokens are handled via raw token matching
+                          if (ph.length > 2) return false;
                           return true;
                         });
                       } else if (appliedDescriptions && appliedDescriptions.length > 0 && !appliedDescriptions.includes('none')) {
