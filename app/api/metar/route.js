@@ -79,8 +79,20 @@ export async function GET(request) {
         try {
           // Strip TEMPO/BECMG/NOSIG/PROB30/PROB40 trend sections — only parse observed weather
           const observedMetar = row.metar.replace(/\s+(TEMPO|BECMG|NOSIG|PROB30|PROB40)\b.*/i, '');
+          
+          // Fix US METAR Statute Miles (SM) visibility formatting issues for metar-parser:
+          // 1. Remove 'M' (less than) or 'P' (plus/greater than) prefix from visibility (e.g., "M1/4SM" -> "1/4SM", "P6SM" -> "6SM", "P10SM" -> "10SM")
+          let smFixedMetar = observedMetar.replace(/\b[MP](\d+(?:\/\d+)?)SM\b/gi, "$1SM");
+
+          // 2. Convert mixed fractions to improper fractions (e.g., "1 1/2SM" -> "3/2SM", "2 1/2SM" -> "5/2SM")
+          // metar-parser splits by whitespace and ignores the leading integer "1" when encountering "1 1/2SM".
+          smFixedMetar = smFixedMetar.replace(/\b[MP]?(\d+)\s+(\d+)\/(\d+)SM\b/gi, (match, w, n, d) => {
+            const num = parseInt(w, 10) * parseInt(d, 10) + parseInt(n, 10);
+            return `${num}/${d}SM`;
+          });
+
           // Fix metar-parser bug: remove station code so it doesn't get misparsed as a weather code (e.g. DRRN parsed as DR - drifting)
-          const sanitizedMetar = row.station ? observedMetar.replace(new RegExp('\\b' + row.station + '\\b', 'gi'), '') : observedMetar;
+          const sanitizedMetar = row.station ? smFixedMetar.replace(new RegExp('\\b' + row.station + '\\b', 'gi'), '') : smFixedMetar;
           const metarData = parse(sanitizedMetar);
           
           let lowestVis = metarData.visibility?.meters !== undefined ? metarData.visibility.meters : null;

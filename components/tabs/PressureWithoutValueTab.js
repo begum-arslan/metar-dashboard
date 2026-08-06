@@ -206,7 +206,7 @@ export default function PressureWithoutValueTab({ data, reportInfo }) {
                 <YAxis 
                   stroke="var(--text-muted)" 
                   tick={{ fill: 'var(--text-muted)' }} 
-                  domain={['auto', 'auto']}
+                  domain={[(dataMin) => Math.floor(dataMin - 1), (dataMax) => Math.ceil(dataMax + 1)]}
                   label={{ value: 'Pressure (hPa)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }}
                 />
                 <Tooltip 
