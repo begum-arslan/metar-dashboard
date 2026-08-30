@@ -93,7 +93,14 @@ export async function GET(request) {
 
           // Fix metar-parser bug: remove station code so it doesn't get misparsed as a weather code (e.g. DRRN parsed as DR - drifting)
           const sanitizedMetar = row.station ? smFixedMetar.replace(new RegExp('\\b' + row.station + '\\b', 'gi'), '') : smFixedMetar;
-          const metarData = parse(sanitizedMetar);
+          
+          // Strip runway state codes (R01/000062 format — 6 digits after slash) before parsing.
+          // These are SNOWTAM-style runway condition reports, NOT RVR values.
+          // Real RVR uses 4 digits (e.g. R01/0400, R01/P2000, R01/0400V0800).
+          // metar-parser incorrectly parses 6-digit runway state as RVR, producing bogus low values (e.g. 62m).
+          const withoutRunwayState = sanitizedMetar.replace(/\bR\d{2}[LCR]?\/\d{6}\b/g, '');
+          
+          const metarData = parse(withoutRunwayState);
           
           let lowestVis = metarData.visibility?.meters !== undefined ? metarData.visibility.meters : null;
           

@@ -211,7 +211,7 @@ export default function TemperaturePctTab({ data, reportInfo }) {
                   <YAxis 
                     stroke="var(--text-muted)" 
                     tick={{ fill: 'var(--text-muted)' }} 
-                    tickFormatter={(val) => (val * 100).toFixed(0)}
+                    tickFormatter={(val) => parseFloat((val * 100).toFixed(2))}
                     label={{ value: 'Ratio(Criteria Rec./Metar Rec.)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }}
                     domain={[0, 'auto']}
                   />
