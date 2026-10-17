@@ -300,71 +300,19 @@ export default function PrevailingWindTab({ data, reportInfo }) {
                     textStyle: { color: '#64748b', fontSize: 11 },
                     data: SPEED_BINS.map(b => b.label)
                   },
-                  graphic: (() => {
-                    // Compute max percentage to determine axis ticks
-                    const maxPct = windRoseData.reduce((mx, d) => {
-                      let sectorSum = 0;
-                      SPEED_BINS.forEach(b => { sectorSum += d[b.label] || 0; });
-                      return Math.max(mx, sectorSum);
-                    }, 0);
-                    // Replicate ECharts splitNumber=4 nice intervals
-                    const rawInterval = maxPct / 4;
-                    const magnitude = Math.pow(10, Math.floor(Math.log10(rawInterval || 1)));
-                    const niceInterval = Math.ceil(rawInterval / magnitude) * magnitude;
-                    const tickValues = [];
-                    for (let i = 1; i <= 4; i++) {
-                      const val = niceInterval * i;
-                      if (val > 0) tickValues.push(val);
+                  graphic: [
+                    {
+                      type: 'text',
+                      right: 5,
+                      top: 24,
+                      style: {
+                        text: 'Wind Speed (knots)',
+                        fill: '#64748b',
+                        fontSize: 12,
+                        fontWeight: 'bold'
+                      }
                     }
-                    
-                    // Place labels at 315° (NW) angle relative to chart center
-                    // Polar center: ['44%', '54%'], radius: '68%'
-                    const angleDeg = 315;
-                    const angleRad = (angleDeg * Math.PI) / 180;
-                    const centerXPct = 44;
-                    const centerYPct = 54;
-                    // Max tick = farthest ring = 68% of half the chart dimension
-                    const maxRadius = 68; // percentage of half-size
-                    const maxTickVal = tickValues.length > 0 ? tickValues[tickValues.length - 1] : 1;
-                    
-                    const pctLabels = tickValues.map(val => {
-                      const rPct = (val / maxTickVal) * maxRadius * 0.5; // half because center is at 50%
-                      const x = centerXPct + rPct * Math.cos(angleRad);
-                      const y = centerYPct - rPct * Math.sin(angleRad);
-                      return {
-                        type: 'text',
-                        left: `${x}%`,
-                        top: `${y}%`,
-                        z: 100,
-                        style: {
-                          text: `${val}%`,
-                          fill: '#e2e8f0',
-                          fontSize: 11,
-                          fontWeight: 'bold',
-                          backgroundColor: 'rgba(15, 23, 42, 0.8)',
-                          borderRadius: 3,
-                          padding: [2, 4, 2, 4],
-                          align: 'center',
-                          verticalAlign: 'middle'
-                        }
-                      };
-                    });
-                    
-                    return [
-                      {
-                        type: 'text',
-                        right: 5,
-                        top: 24,
-                        style: {
-                          text: 'Wind Speed (knots)',
-                          fill: '#64748b',
-                          fontSize: 12,
-                          fontWeight: 'bold'
-                        }
-                      },
-                      ...pctLabels
-                    ];
-                  })(),
+                  ],
                   polar: {
                     radius: '68%',
                     center: ['44%', '54%']
@@ -421,8 +369,8 @@ export default function PrevailingWindTab({ data, reportInfo }) {
                   <ComposedChart data={obsMaxAvgData} margin={{ top: 10, right: 30, left: 30, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                     <XAxis dataKey="direction" type="category" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} tickFormatter={(val) => `${val}°`} label={{ value: 'Directions (°)', position: 'insideBottom', offset: -10, fill: 'var(--text-muted)' }} />
-                    <YAxis yAxisId="left" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Wind Speed (KT)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }} />
-                    <YAxis yAxisId="right" orientation="right" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Sum(Observations)', angle: 90, position: 'insideRight', offset: -10, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }} />
+                    <YAxis yAxisId="left" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Wind Speed (KT)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }} allowDecimals={false} />
+                    <YAxis yAxisId="right" orientation="right" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} label={{ value: 'Sum(Observations)', angle: 90, position: 'insideRight', offset: -10, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }} allowDecimals={false} />
                     <Tooltip contentStyle={{ backgroundColor: 'var(--secondary)', border: '1px solid var(--card-border)', borderRadius: '8px' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} formatter={(val, name) => [name === 'Observations' ? val : val + 'KT', name]} labelFormatter={(label) => `${label}°`} />
                     <Legend verticalAlign="top" height={36} iconType="rect" align="center" wrapperStyle={{ marginBottom: '16px' }} />
                     

@@ -54,7 +54,8 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
         const dateStr = d.valid.includes('T') ? d.valid : `${d.valid.replace(' ', 'T')}Z`;
         const dt = parseISO(dateStr);
         if (isNaN(dt.getTime())) return null;
-        return { ...d, _dt: dt };
+        const dayStr = dt.toISOString().split('T')[0];
+        return { ...d, _dt: dt, _dayStr: dayStr };
       } catch (e) {
         return null;
       }
@@ -62,15 +63,19 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
 
     const records = parsed.length;
 
-    let buckets = {};
+    let metarBuckets = {};
+    let criteriaBuckets = {};
+
     if (timeGroup === 'Hourly') {
       for (let i = 0; i < 24; i++) {
-        buckets[i] = { label: String(i), metarRec: 0, criteriaRec: 0 };
+        metarBuckets[i] = { label: String(i), uniqueDays: new Set() };
+        criteriaBuckets[i] = { label: String(i), uniqueDays: new Set() };
       }
     } else if (timeGroup === 'Monthly') {
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       for (let i = 0; i < 12; i++) {
-        buckets[i] = { label: months[i], metarRec: 0, criteriaRec: 0 };
+        metarBuckets[i] = { label: months[i], uniqueDays: new Set() };
+        criteriaBuckets[i] = { label: months[i], uniqueDays: new Set() };
       }
     }
 
@@ -82,13 +87,14 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
         key = d._dt.getUTCMonth();
       } else if (timeGroup === 'Yearly') {
         key = d._dt.getUTCFullYear();
-        if (!buckets[key]) {
-          buckets[key] = { label: String(key), metarRec: 0, criteriaRec: 0 };
+        if (!metarBuckets[key]) {
+          metarBuckets[key] = { label: String(key), uniqueDays: new Set() };
+          criteriaBuckets[key] = { label: String(key), uniqueDays: new Set() };
         }
       }
 
       if (key !== null) {
-        buckets[key].metarRec++;
+        metarBuckets[key].uniqueDays.add(d._dayStr);
 
         if (appliedFilters !== null) {
           const { visibility, runway, component, windType, minSpeed, maxSpeed } = appliedFilters;
@@ -126,9 +132,8 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
             
             // Criteria bounds
             if (valueToCheck >= minSpeed && valueToCheck <= maxSpeed) {
-                // Noted that screenshot shows 0 parameter, so including bounds from 0 upwards instead of strictly > 0.
                 if(valueToCheck >= 0){
-                    buckets[key].criteriaRec++;
+                    criteriaBuckets[key].uniqueDays.add(d._dayStr);
                 }
             }
           }
@@ -136,24 +141,23 @@ export default function VisHeadTailPctTab({ data, reportInfo }) {
       }
     });
 
-    const keys = Object.keys(buckets).sort((a, b) => parseInt(a) - parseInt(b));
+    const keys = Object.keys(metarBuckets).sort((a, b) => parseInt(a) - parseInt(b));
     let critTotal = 0;
     let metTotal = 0;
 
     const result = keys.map(keyStr => {
-      const mRec = buckets[keyStr].metarRec;
-      const cRec = buckets[keyStr].criteriaRec;
+      const metarDays = metarBuckets[keyStr].uniqueDays.size;
+      const criteriaDays = criteriaBuckets[keyStr].uniqueDays.size;
+      const rate = metarDays > 0 ? parseFloat((criteriaDays / metarDays).toFixed(4)) : 0;
       
-      const rate = mRec > 0 ? parseFloat((cRec / mRec).toFixed(4)) : 0;
-      
-      critTotal += cRec;
-      metTotal += mRec;
+      critTotal += criteriaDays;
+      metTotal += metarDays;
 
       return {
-        label: buckets[keyStr].label,
+        label: metarBuckets[keyStr].label,
         Rate: rate,
-        criteriaRec: cRec,
-        metarRec: mRec
+        criteriaRec: criteriaDays,
+        metarRec: metarDays
       };
     });
 

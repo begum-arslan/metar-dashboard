@@ -400,7 +400,7 @@ export default function Charts({ data, startDate, endDate }) {
             <BarChart data={visRiskData} margin={{ top: 5, right: 20, bottom: 5, left: 25 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
-              <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} unit="%" />
+              <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} unit="%" allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} formatter={(val) => [`${val}%`, undefined]} />
               <Legend 
                 verticalAlign="top" 
@@ -443,7 +443,7 @@ export default function Charts({ data, startDate, endDate }) {
             <BarChart data={windRiskData} margin={{ top: 5, right: 20, bottom: 5, left: 25 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
-              <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} unit="%" />
+              <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} unit="%" allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} formatter={(val) => [`${val}%`, undefined]} />
               <Legend verticalAlign="top" height={36} />
               <Bar dataKey="Wind > 50kt" fill="#8b5cf6" name="Wind > 50kt" radius={[2, 2, 0, 0]} />
@@ -487,7 +487,7 @@ export default function Charts({ data, startDate, endDate }) {
             <LineChart data={tempClimatData} margin={{ top: 5, right: 20, bottom: 5, left: 25 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
-              <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} unit="°C" />
+              <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} unit="°C" allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} formatter={(val) => [`${val}°C`, undefined]} />
               <Legend 
                 verticalAlign="top" 
@@ -532,7 +532,7 @@ export default function Charts({ data, startDate, endDate }) {
             <BarChart data={wxRiskData} margin={{ top: 5, right: 20, bottom: 5, left: 25 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} />
-              <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} unit="%" />
+              <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)' }} unit="%" allowDecimals={false} />
               <Tooltip contentStyle={tooltipStyle} formatter={(val) => [`${val}%`, undefined]} />
               <Legend verticalAlign="top" height={36} />
               <Bar dataKey="TSRA Risk" fill="#f59e0b" name="⚡ TSRA Risk" radius={[2, 2, 0, 0]} />

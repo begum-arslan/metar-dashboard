@@ -9,6 +9,42 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
   const startDateObj = startDate ? parseISO(startDate) : null;
   const endDateObj = endDate ? parseISO(endDate) : null;
 
+  // Auto-format date input: insert dashes as user types (YYYY-MM-DD)
+  const autoFormatDate = (e, setter) => {
+    if (!e || !e.target || typeof e.target.value !== 'string') return;
+    const input = e.target;
+    // Only digits and dashes allowed
+    let raw = input.value.replace(/[^\d]/g, '');
+    // Limit to 8 digits (YYYYMMDD)
+    raw = raw.slice(0, 8);
+    // Build formatted string
+    let formatted = '';
+    if (raw.length > 4) {
+      formatted = raw.slice(0, 4) + '-' + raw.slice(4);
+    } else {
+      formatted = raw;
+    }
+    if (raw.length > 6) {
+      formatted = raw.slice(0, 4) + '-' + raw.slice(4, 6) + '-' + raw.slice(6);
+    }
+    // Auto-add dash after year (4 digits) or month (7 chars = YYYY-MM)
+    if (raw.length === 4 && input.value.length > (input._prevLen || 0)) {
+      formatted = raw + '-';
+    }
+    if (raw.length === 6 && input.value.length > (input._prevLen || 0)) {
+      formatted = raw.slice(0, 4) + '-' + raw.slice(4) + '-';
+    }
+    input._prevLen = formatted.length;
+    input.value = formatted;
+    // If we have a complete date, update state
+    if (/^\d{4}-\d{2}-\d{2}$/.test(formatted)) {
+      const parsed = parseISO(formatted);
+      if (!isNaN(parsed.getTime())) {
+        setter(formatted);
+      }
+    }
+  };
+
   const handleStartChange = (date) => {
     if (date) setStartDate(format(date, 'yyyy-MM-dd'));
   };
@@ -82,6 +118,7 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
             id="start"
             selected={startDateObj}
             onChange={handleStartChange}
+            onChangeRaw={(e) => autoFormatDate(e, setStartDate)}
             dateFormat="yyyy-MM-dd"
             className="date-picker-input"
             minDate={parseISO('1998-01-01')}
@@ -102,6 +139,7 @@ export default function ControlPanel({ onFetch, loading, station, setStation, st
             id="end"
             selected={endDateObj}
             onChange={handleEndChange}
+            onChangeRaw={(e) => autoFormatDate(e, setEndDate)}
             dateFormat="yyyy-MM-dd"
             className="date-picker-input"
             minDate={startDateObj || parseISO('1998-01-01')}

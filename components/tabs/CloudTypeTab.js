@@ -301,7 +301,7 @@ export default function CloudTypeTab({ data, reportInfo }) {
                 <YAxis 
                   stroke="var(--text-muted)" 
                   tick={{ fill: 'var(--text-muted)' }} 
-                  label={{ value: 'Sum(Observations/Days)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }}
+                  label={{ value: 'Sum(Observations/Days)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }} allowDecimals={false}
                 />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--secondary)', border: '1px solid var(--card-border)', borderRadius: '8px' }} 

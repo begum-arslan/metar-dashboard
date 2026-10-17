@@ -205,8 +205,8 @@ export default function PressureTab({ data, reportInfo }) {
                 <YAxis 
                   stroke="var(--text-muted)" 
                   tick={{ fill: 'var(--text-muted)' }} 
-                  domain={[(dataMin) => Math.floor(dataMin - 1), (dataMax) => Math.ceil(dataMax + 1)]}
-                  label={{ value: 'Pressure (hPa)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }}
+                  label={{ value: 'Pressure (hPa)', angle: -90, position: 'insideLeft', offset: -15, fill: 'var(--text-muted)', style: { textAnchor: 'middle' } }} 
+                  allowDecimals={false}
                 />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--secondary)', border: '1px solid var(--card-border)', borderRadius: '8px' }} 
