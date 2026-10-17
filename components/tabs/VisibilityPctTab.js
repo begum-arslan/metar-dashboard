@@ -115,7 +115,9 @@ export default function VisibilityPctTab({ data, reportInfo }) {
 
       return {
         label: metarBuckets[keyStr].label,
-        Rate: rate
+        Rate: rate,
+        criteriaRec: criteriaDays,
+        metarRec: metarDays
       };
     });
 
@@ -218,11 +220,14 @@ export default function VisibilityPctTab({ data, reportInfo }) {
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--secondary)', border: '1px solid var(--card-border)', borderRadius: '8px' }} 
                   cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                  formatter={(value) => [(value * 100).toFixed(2) + '%', 'Rate']}
+                  formatter={(value, name, props) => [
+                    `${(value * 100).toFixed(2)}% (${props.payload.criteriaRec}/${props.payload.metarRec})`, 
+                    'Ratio'
+                  ]}
                 />
                 <Legend verticalAlign="top" height={36} iconType="rect" align="center" wrapperStyle={{ marginBottom: '16px' }} />
                 
-                <Bar dataKey="Rate" fill="#fb7185" name="Rate" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="Rate" fill="#fb7185" name="Ratio" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

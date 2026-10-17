@@ -144,7 +144,7 @@ export default function PhenomenaTab({ data, reportInfo }) {
   const [appliedIncludeVC, setAppliedIncludeVC] = useState(false);
   const [appliedDescriptions, setAppliedDescriptions] = useState(null);
   const [appliedPhenomena, setAppliedPhenomena] = useState(null);
-  
+
   const [isDescOpen, setIsDescOpen] = useState(false);
   const [isPhenomenaOpen, setIsPhenomenaOpen] = useState(false);
   const [timeGroup, setTimeGroup] = useState('Hourly');
@@ -206,11 +206,11 @@ export default function PhenomenaTab({ data, reportInfo }) {
           if (appliedIncludeVC && !isVC) return false;
           if (!appliedIncludeVC && isVC) return false;
 
-          const matchInt = appliedIntensity === 'All' 
-            ? true 
+          const matchInt = appliedIntensity === 'All'
+            ? true
             : (w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity));
 
-          const matchDesc = (!appliedDescriptions || appliedDescriptions.length === 0) || 
+          const matchDesc = (!appliedDescriptions || appliedDescriptions.length === 0) ||
             appliedDescriptions.some(desc => {
               if (desc === 'none') return !w.descriptor;
               return w.descriptor === desc;
@@ -300,11 +300,11 @@ export default function PhenomenaTab({ data, reportInfo }) {
           </div>
 
           <div className="form-group" style={{ marginBottom: 0, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
-            <input 
-              type="checkbox" 
-              id="includeVC" 
-              checked={includeVC} 
-              onChange={e => setIncludeVC(e.target.checked)} 
+            <input
+              type="checkbox"
+              id="includeVC"
+              checked={includeVC}
+              onChange={e => setIncludeVC(e.target.checked)}
               style={{ width: '16px', height: '16px', cursor: 'pointer', flexShrink: 0 }}
             />
             <label htmlFor="includeVC" style={{ margin: 0, cursor: 'pointer', fontSize: '0.8rem' }}>Include VC (Vicinity)</label>
@@ -312,7 +312,7 @@ export default function PhenomenaTab({ data, reportInfo }) {
 
           <div className="form-group" ref={descRef} style={{ marginBottom: 0, position: 'relative' }}>
             <label>Description</label>
-            <div 
+            <div
               onClick={() => setIsDescOpen(!isDescOpen)}
               style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             >
@@ -349,7 +349,7 @@ export default function PhenomenaTab({ data, reportInfo }) {
 
           <div className="form-group" ref={phenomRef} style={{ marginBottom: 0, position: 'relative' }}>
             <label>Weather Phenomena</label>
-            <div 
+            <div
               onClick={() => setIsPhenomenaOpen(!isPhenomenaOpen)}
               style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--card-border)', background: 'rgba(255, 255, 255, 0.05)', color: '#ffffff', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
             >
@@ -386,11 +386,11 @@ export default function PhenomenaTab({ data, reportInfo }) {
             )}
 
             <div className="form-group" style={{ marginBottom: 0, marginTop: '8px', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
-              <input 
-                type="checkbox" 
-                id="combineMode" 
-                checked={combineMode} 
-                onChange={e => { setCombineMode(e.target.checked); setIsPhenomenaOpen(false); }} 
+              <input
+                type="checkbox"
+                id="combineMode"
+                checked={combineMode}
+                onChange={e => { setCombineMode(e.target.checked); setIsPhenomenaOpen(false); }}
                 style={{ width: '16px', height: '16px', cursor: 'pointer', flexShrink: 0 }}
               />
               <label htmlFor="combineMode" style={{ margin: 0, cursor: 'pointer', fontSize: '0.8rem', whiteSpace: 'nowrap', color: combineMode ? '#60a5fa' : 'inherit' }}>Combine</label>
@@ -403,8 +403,8 @@ export default function PhenomenaTab({ data, reportInfo }) {
             )}
 
             <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', lineHeight: '1.2' }}>
-              {combineMode 
-                ? '* In Combine mode, selection order matters. Selected phenomena are concatenated in order.' 
+              {combineMode
+                ? '* In Combine mode, selection order matters. Selected phenomena are concatenated in order.'
                 : '* In normal mode, selections are searched independently (OR logic).'
               }
             </div>
@@ -449,11 +449,11 @@ export default function PhenomenaTab({ data, reportInfo }) {
                         if (appliedIncludeVC && !isVC) return false;
                         if (!appliedIncludeVC && isVC) return false;
 
-                        const matchInt = appliedIntensity === 'All' 
-                          ? true 
+                        const matchInt = appliedIntensity === 'All'
+                          ? true
                           : (w.intensity === appliedIntensity || (appliedIntensity === 'moderate' && !w.intensity));
 
-                        const matchDesc = (!appliedDescriptions || appliedDescriptions.length === 0) || 
+                        const matchDesc = (!appliedDescriptions || appliedDescriptions.length === 0) ||
                           appliedDescriptions.some(desc => {
                             if (desc === 'none') return !w.descriptor;
                             return w.descriptor === desc;

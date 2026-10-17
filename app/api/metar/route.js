@@ -42,9 +42,13 @@ export async function GET(request) {
     iemUrl.searchParams.append('year1', year1);
     iemUrl.searchParams.append('month1', month1);
     iemUrl.searchParams.append('day1', day1);
+    iemUrl.searchParams.append('hour1', '0');
+    iemUrl.searchParams.append('minute1', '0');
     iemUrl.searchParams.append('year2', year2);
     iemUrl.searchParams.append('month2', month2);
     iemUrl.searchParams.append('day2', day2);
+    iemUrl.searchParams.append('hour2', '23');
+    iemUrl.searchParams.append('minute2', '59');
     iemUrl.searchParams.append('tz', 'Etc/UTC');
     iemUrl.searchParams.append('format', 'onlycomma');
     iemUrl.searchParams.append('latlon', 'yes');
